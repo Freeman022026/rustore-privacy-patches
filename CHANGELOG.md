@@ -1,3 +1,9 @@
+## [1.1.2](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.1...v1.1.2) (2026-08-17)
+
+### 🐛 Bug Fixes
+
+* Preserve disabled manifest components ([d173ab0](https://github.com/Freeman022026/rustore-privacy-patches/commit/d173ab080a21fa961db5195d6fb0aa669220c73e))
+
 ## [1.1.1](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.0...v1.1.1) (2026-08-17)
 
 ### 🐛 Bug Fixes
