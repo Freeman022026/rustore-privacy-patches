@@ -67,7 +67,7 @@ jobs:
 
       - name: Clean integration-test artifacts
         if: github.ref_name == 'main' || github.ref_name == 'dev'
-        run: ./gradlew clean --no-daemon
+        run: rm -rf patches/build
 
       # Semantic release runs its own Gradle build command.
       # Only dev and main branch will generate a release as specified by .releaserc
