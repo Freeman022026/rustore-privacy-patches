@@ -54,19 +54,19 @@ Morphe can automatically reapply a new patch-bundle release to the original APK 
 ## Supported version and bundle
 
 <!-- PATCHES_START EXPANDED -->
-Current bundle: [v1.0.0](https://github.com/Freeman022026/rustore-privacy-patches/releases/tag/v1.0.0) on `main`.
+Current bundle: [v1.1.0](https://github.com/Freeman022026/rustore-privacy-patches/releases/tag/v1.1.0) on `main`.
 
 ### RuStore
 
-Supported version: `1.107.0.3`
+Supported versions: `1.107.0.3`
 
 | Patch | Description |
 | --- | --- |
+| Disable Kaspersky background scan | Disables periodic Kaspersky scheduling and reports disabled workers as successfully completed. |
 | Disable advertisements | Removes ad providers and ad identifiers, returns an empty ad list, and keeps advertising consent disabled. |
 | Disable analytics and trackers | Disables AppMetrica, MyTracker, AltCraft, Radar, install referrer, metrics, and audited logging transports. |
 | Disable background hooks | Disables audited boot, network-state, VPN, and Connect session hooks. |
 | Disable invasive permissions | Removes privileged install, location, storage, billing, USB, and vendor data access while preserving user-driven installs. |
-| Disable Kaspersky background scan | Disables periodic Kaspersky scheduling and reports disabled workers as successfully completed. |
 | Disable push services | Disables RuStore and VK push initialization, services, and audited push receivers. |
 | Disable verification hooks | Disables audited SMS, call, phone-state, SID, and Mail.ru verification hooks. |
 | Hide gaming profile | Removes the gaming profile permission, hides both gaming buttons, and blocks navigation to the gaming profile. |
