@@ -1,10 +1,12 @@
-# RuStore privacy patch for Morphe
+# RuStore patches for Morphe
+
+![Official RuStore app icon](assets/rustore-icon.png)
 
 [![Upstream audit](https://github.com/Freeman022026/rustore-privacy-patches/actions/workflows/check-rustore.yml/badge.svg)](https://github.com/Freeman022026/rustore-privacy-patches/actions/workflows/check-rustore.yml)
 [![Release](https://github.com/Freeman022026/rustore-privacy-patches/actions/workflows/release.yml/badge.svg)](https://github.com/Freeman022026/rustore-privacy-patches/actions/workflows/release.yml)
 [![Latest release](https://img.shields.io/github/v/release/Freeman022026/rustore-privacy-patches)](https://github.com/Freeman022026/rustore-privacy-patches/releases/latest)
 
-This repository publishes a Morphe patch bundle for the official RuStore Android app. The patch removes audited telemetry and background hooks while preserving app discovery, downloads, updates, and user-approved package installation.
+This repository publishes selectable Morphe patches for the official RuStore Android app. The patches cover advertising, analytics, push services, verification hooks, background activity, Kaspersky scans, the gaming profile, and update authentication.
 
 The repository contains patches only. It does not redistribute RuStore or any patched APK.
 
@@ -18,17 +20,17 @@ https://raw.githubusercontent.com/Freeman022026/rustore-privacy-patches/main/pat
 
 The [one-click source link](https://morphe.software/add-source?github=Freeman022026/rustore-privacy-patches) is also available.
 
-Download RuStore from [SoftDaily](https://softdaily.ru/rustore/), return to Morphe, select RuStore, and let Morphe patch and install it. The patch accepts only the audited RuStore package, version, and official signing certificate.
+Download RuStore from [SoftDaily](https://softdaily.ru/rustore/), return to Morphe, select the features you want, and let Morphe patch and install it. The bundle accepts only the audited RuStore package, version, and official signing certificate.
 
 When RuStore asks for notification access or exclusion from battery optimization, deny both requests. The declarations must remain in the APK for compatibility, but the permissions do not need to be granted.
 
-## What is removed
+## Available patches
 
-The patch disables the audited AppMetrica and MyTracker initialization paths, advertising and device identifiers, push registration, SMS and call hooks, location access, boot receivers, VPN activation, usage statistics, background receivers, and related initialization providers.
+All nine patches are enabled by default, but Morphe lets you switch them on or off separately. The bundle includes patches for invasive permissions, advertisements, analytics and trackers, push services, verification hooks, background hooks, periodic Kaspersky scans, the gaming profile, and update authentication.
 
-It also forces the "Agree to receive advertising materials" setting off. The checkbox is unchecked when displayed, and tapping it cannot opt the patched app back in.
+The advertisements patch forces the "Agree to receive advertising materials" setting off. The checkbox is unchecked when displayed, and tapping it cannot opt the patched app back in.
 
-It also neutralizes the privileged `INSTALL_PACKAGES` declaration. RuStore keeps `REQUEST_INSTALL_PACKAGES` and the other capabilities needed for package discovery and user-approved installs.
+The invasive-permissions patch neutralizes the privileged `INSTALL_PACKAGES` declaration. RuStore keeps `REQUEST_INSTALL_PACKAGES` and the other capabilities needed for package discovery and user-approved installs.
 
 ## Samsung compatibility
 
@@ -49,18 +51,26 @@ The current RuStore 1.107.0.3 build was installed and functionally checked on a 
 
 Morphe can automatically reapply a new patch-bundle release to the original APK it saved during patching. It does not fetch a newly released RuStore APK. When RuStore itself moves to a new version, provide that official APK to Morphe once. Future patch-only updates can then be reapplied automatically.
 
-## Supported versions and bundle
+## Supported version and bundle
 
 <!-- PATCHES_START EXPANDED -->
 Current bundle: [v1.0.0](https://github.com/Freeman022026/rustore-privacy-patches/releases/tag/v1.0.0) on `main`.
 
 ### RuStore
 
-Supported versions: `1.107.0.3`, `1.105.0.2`
+Supported version: `1.107.0.3`
 
 | Patch | Description |
 | --- | --- |
-| RuStore privacy hardening | Disables audited tracking, advertising consent, push, SMS, VPN, boot, and background hooks while keeping app browsing and user-driven installs working. |
+| Disable advertisements | Removes ad providers and ad identifiers, returns an empty ad list, and keeps advertising consent disabled. |
+| Disable analytics and trackers | Disables AppMetrica, MyTracker, AltCraft, Radar, install referrer, metrics, and audited logging transports. |
+| Disable background hooks | Disables audited boot, network-state, VPN, and Connect session hooks. |
+| Disable invasive permissions | Removes privileged install, location, storage, billing, USB, and vendor data access while preserving user-driven installs. |
+| Disable Kaspersky background scan | Disables periodic Kaspersky scheduling and reports disabled workers as successfully completed. |
+| Disable push services | Disables RuStore and VK push initialization, services, and audited push receivers. |
+| Disable verification hooks | Disables audited SMS, call, phone-state, SID, and Mail.ru verification hooks. |
+| Hide gaming profile | Removes the gaming profile permission, hides both gaming buttons, and blocks navigation to the gaming profile. |
+| Skip update authentication | Skips the update authentication suggestion and returns a valid completed result. |
 
 <!-- PATCHES_END -->
 

@@ -14,8 +14,10 @@ The previous audited official APK was RuStore 1.105.0.2 (version code 1105002). 
 
 The permission set and component counts are unchanged. The only provider identity change is the replacement of `ru.mail.omicron.util.network.state.NetworkStateListenerProvider` with `ru.mail.network.NetworkStateListenerProvider`.
 
-All previously patched public method anchors remain present. The patch continues to neutralize AppMetrica and MyTracker initialization, the audited initialization providers, all 21 audited broadcast receivers, and the single AppMetrica `reportAppOpen` call in `MainActivity.onNewIntent`. The network provider check accepts either audited class name but requires exactly one, so an unexpected third variant fails the build.
+The 1.107.0.3 audit replaced the monolithic patch with nine selectable patches. AppMetrica and MyTracker initialization remain disabled. The new analytics patch also covers AltCraft and Radar scheduling and returns a valid WorkManager success result from disabled workers. Separate patches now control advertisements, push services, verification hooks, background hooks, Kaspersky scheduling, the gaming profile, and update authentication.
 
 The retained install and package-discovery capabilities are unchanged. Tracking identifiers, location, SMS, call-log, boot, VPN, usage-stat, push, advertising, and privileged-install declarations remain disabled.
 
 The Samsung compatibility declarations `POST_NOTIFICATIONS` and `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` remain present. This preserves the confirmed first-run callback behavior that populates Samsung's installed-app list while allowing both user-facing requests to be denied.
+
+Only RuStore 1.107.0.3 is supported by the current bundle. Version 1.105.0.2 remains in this document only as the historical comparison baseline.

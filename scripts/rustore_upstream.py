@@ -34,10 +34,43 @@ FORBIDDEN_PERMISSIONS = {
     "android.permission.PACKAGE_USAGE_STATS",
     "android.permission.READ_CALL_LOG",
     "android.permission.READ_PHONE_NUMBERS",
+    "android.provider.Telephony.SMS_RECEIVED",
     "android.permission.RECEIVE_BOOT_COMPLETED",
+    "android.permission.CHANGE_WIFI_STATE",
+    "android.permission.CHANGE_NETWORK_STATE",
+    "com.google.android.c2dm.permission.RECEIVE",
+    "android.permission.CALL_PHONE",
+    "ru.sb.mobile.sid.BIND_PERSONALIZATION_SERVICE",
     "android.permission.ACCESS_FINE_LOCATION",
     "android.permission.ACCESS_COARSE_LOCATION",
+    "android.permission.READ_BASIC_PHONE_STATE",
+    "com.google.android.providers.gsf.permission.READ_GSERVICES",
+    "com.android.vending.BILLING",
+    "android.permission.USB_HOST",
+    "com.google.android.finsky.permission.BIND_GET_INSTALL_REFERRER_SERVICE",
+    "android.permission.WRITE_EXTERNAL_STORAGE",
+    "com.huawei.appmarket.service.commondata.permission.GET_COMMON_DATA",
     "android.permission.BIND_VPN_SERVICE",
+}
+FORBIDDEN_MANIFEST_ANCHORS = {
+    "android.intent.action.BOOT_COMPLETED",
+    "android.net.VpnService",
+    "ru.vk.store.feature.connect.session",
+    "ru.mail.network",
+    "ru.vk.store.feature.storeapp.install.referrer",
+    "ru.rustore.sdk.pushclient.provider",
+    "ru.rustore.sdk.metrics",
+    "ru.mail.libverify",
+    "ru.mail.verify",
+    "sid.sdk.global.utils.sms",
+    "io.appmetrica",
+    "com.my.target",
+    "com.vk.push",
+    "com.vk.superapp.logs",
+    "com.inappstory.sdk",
+    "com.kavsdk",
+    "kavsdk.",
+    "com.google.android.datatransport",
 }
 
 
@@ -142,15 +175,26 @@ def audit_patched(args: argparse.Namespace) -> None:
     permissions = set(re.findall(r"uses-permission: name='([^']+)'", badging))
     missing = sorted(REQUIRED_PERMISSIONS - permissions)
     forbidden = sorted(FORBIDDEN_PERMISSIONS & permissions)
-    if missing or forbidden:
+    manifest = run(
+        str(args.aapt), "dump", "xmltree", str(args.apk), "AndroidManifest.xml"
+    )
+    forbidden_anchors = sorted(
+        anchor for anchor in FORBIDDEN_MANIFEST_ANCHORS if anchor in manifest
+    )
+    if missing or forbidden or forbidden_anchors:
         raise RuntimeError(
-            f"Patched manifest permission audit failed; missing={missing}, forbidden={forbidden}"
+            "Patched manifest audit failed; "
+            f"missing={missing}, forbidden={forbidden}, "
+            f"forbidden_anchors={forbidden_anchors}"
         )
     print(
         json.dumps(
             {
                 "required_permissions_present": sorted(REQUIRED_PERMISSIONS),
                 "forbidden_permissions_absent": sorted(FORBIDDEN_PERMISSIONS),
+                "forbidden_manifest_anchors_absent": sorted(
+                    FORBIDDEN_MANIFEST_ANCHORS
+                ),
             },
             indent=2,
         )
@@ -164,20 +208,13 @@ def promote(args: argparse.Namespace) -> None:
     constants = args.constants.read_text(encoding="utf-8")
 
     current_match = re.search(r'const val AUDITED_VERSION = "([^"]+)"', constants)
-    previous_match = re.search(
-        r'const val PREVIOUS_AUDITED_VERSION = "([^"]+)"', constants
-    )
-    if current_match is None or previous_match is None:
-        raise RuntimeError("Could not find audited version constants")
+    if current_match is None:
+        raise RuntimeError("Could not find the audited version constant")
 
     old_current = current_match.group(1)
     new_current = inspection["version_name"]
     version_changed = old_current != new_current
     if version_changed:
-        constants = constants.replace(
-            f'const val PREVIOUS_AUDITED_VERSION = "{previous_match.group(1)}"',
-            f'const val PREVIOUS_AUDITED_VERSION = "{old_current}"',
-        )
         constants = constants.replace(
             f'const val AUDITED_VERSION = "{old_current}"',
             f'const val AUDITED_VERSION = "{new_current}"',
