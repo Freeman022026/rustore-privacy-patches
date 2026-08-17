@@ -65,6 +65,10 @@ jobs:
           --apk build/rustore-privacy.apk
           --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt"
 
+      - name: Clean integration-test artifacts
+        if: github.ref_name == 'main' || github.ref_name == 'dev'
+        run: ./gradlew clean --no-daemon
+
       # Semantic release runs its own Gradle build command.
       # Only dev and main branch will generate a release as specified by .releaserc
       - name: Release
