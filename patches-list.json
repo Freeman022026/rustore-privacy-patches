@@ -1,0 +1,43 @@
+{
+  "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
+  "version": "0.0.0",
+  "patches": [
+    {
+      "name": "RuStore privacy hardening",
+      "description": "Disables audited tracking, advertising consent, push, SMS, VPN, boot, and background hooks while keeping app browsing and user-driven installs working.",
+      "default": true,
+      "dependencies": [
+        "ResourcePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "ru.vk.store",
+          "name": "RuStore",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#0A85FF",
+          "signatures": [
+            "661f20828ef780de0b79bc59f26a30864316355f30e4f91cfa14a20791839914"
+          ],
+          "targets": [
+            {
+              "version": "1.107.0.3",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "1.105.0.2",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    }
+  ]
+}
