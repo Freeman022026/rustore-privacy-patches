@@ -83,6 +83,16 @@ private val samsungRequiredCapabilities = setOf(
     "android.permission.REQUEST_DELETE_PACKAGES"
 )
 
+private const val ANDROID_NAMESPACE = "http://schemas.android.com/apk/res/android"
+
+private val manifestComponentTags = setOf(
+    "activity",
+    "activity-alias",
+    "service",
+    "receiver",
+    "provider"
+)
+
 private fun Document.attributeValues(): List<String> = buildList {
     val elements = getElementsByTagName("*")
     for (elementIndex in 0 until elements.length) {
@@ -152,23 +162,35 @@ private fun Document.replaceAuditedValues(
     feature: String,
     replacements: LinkedHashMap<String, String>,
     requiredAnchors: Set<String>,
-    forbiddenExactValues: Set<String> = emptySet()
+    forbiddenExactValues: Set<String> = emptySet(),
+    inertComponentPrefixes: Set<String> = emptySet()
 ) {
     val counts = replacements.keys.associateWith { 0 }.toMutableMap()
     val elements = getElementsByTagName("*")
     for (elementIndex in 0 until elements.length) {
-        val attributes = (elements.item(elementIndex) as Element).attributes
+        val element = elements.item(elementIndex) as Element
+        val attributes = element.attributes
+        var disableComponent = false
         for (attributeIndex in 0 until attributes.length) {
             val attribute = attributes.item(attributeIndex)
             var value = attribute.nodeValue
+            val isComponentClass = element.tagName in manifestComponentTags &&
+                ((attribute.namespaceURI == ANDROID_NAMESPACE && attribute.localName == "name") ||
+                    attribute.nodeName == "android:name")
+            val preserveComponentClass = isComponentClass &&
+                inertComponentPrefixes.any(value::startsWith)
             replacements.forEach { (old, new) ->
                 val count = value.occurrencesOf(old)
                 if (count > 0) {
                     counts[old] = counts.getValue(old) + count
-                    value = value.replace(old, new)
+                    if (!preserveComponentClass) value = value.replace(old, new)
                 }
             }
             attribute.nodeValue = value
+            disableComponent = disableComponent || preserveComponentClass
+        }
+        if (disableComponent) {
+            element.setAttribute("android:enabled", "false")
         }
     }
 
@@ -182,6 +204,20 @@ private fun Document.replaceAuditedValues(
     forbiddenExactValues.forEach { forbidden ->
         require(forbidden !in values) {
             "$feature manifest value remains enabled: $forbidden"
+        }
+    }
+    inertComponentPrefixes.forEach { prefix ->
+        val matchingComponents = manifestComponentTags.flatMap { tagName ->
+            val nodes = getElementsByTagName(tagName)
+            (0 until nodes.length)
+                .map { nodes.item(it) as Element }
+                .filter { it.getAttribute("android:name").startsWith(prefix) }
+        }
+        require(matchingComponents.isNotEmpty()) {
+            "$feature manifest component prefix is missing: $prefix"
+        }
+        require(matchingComponents.all { it.getAttribute("android:enabled") == "false" }) {
+            "$feature manifest component remains enabled: $prefix"
         }
     }
     samsungRequiredCapabilities.forEach { capability ->
@@ -254,7 +290,8 @@ internal val advertisingManifestPatch = resourcePatch {
                 "Advertising",
                 featureReplacements(direct, prefixes),
                 direct.keys + prefixes.keys,
-                direct.keys
+                direct.keys,
+                prefixes.keys
             )
         }
     }
@@ -284,7 +321,8 @@ internal val analyticsManifestPatch = resourcePatch {
                 "Analytics",
                 featureReplacements(direct, prefixes),
                 direct.keys + prefixes.keys,
-                direct.keys
+                direct.keys,
+                prefixes.keys
             )
         }
     }
@@ -313,7 +351,8 @@ val disablePushServicesPatch = resourcePatch(
                 "Push services",
                 featureReplacements(direct, prefixes),
                 direct.keys + prefixes.keys,
-                direct.keys
+                direct.keys,
+                prefixes.keys
             )
         }
     }
@@ -349,7 +388,8 @@ val disableVerificationHooksPatch = resourcePatch(
                 "Verification hooks",
                 featureReplacements(direct, prefixes),
                 direct.keys + prefixes.keys,
-                direct.keys
+                direct.keys,
+                prefixes.keys
             )
         }
     }
@@ -384,7 +424,8 @@ val disableBackgroundHooksPatch = resourcePatch(
                 "Background hooks",
                 featureReplacements(direct, prefixes),
                 direct.keys + prefixes.keys,
-                direct.keys
+                direct.keys,
+                prefixes.keys
             )
         }
     }
@@ -403,7 +444,8 @@ internal val kasperskyManifestPatch = resourcePatch {
             document.replaceAuditedValues(
                 "Kaspersky background scan",
                 featureReplacements(emptyMap(), prefixes),
-                prefixes.keys
+                prefixes.keys,
+                inertComponentPrefixes = setOf("com.kavsdk")
             )
         }
     }

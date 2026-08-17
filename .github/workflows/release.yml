@@ -34,6 +34,37 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install Android build tools
+        if: github.ref_name == 'main' || github.ref_name == 'dev'
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;36.0.0"
+
+      - name: Download the audited RuStore APK
+        if: github.ref_name == 'main' || github.ref_name == 'dev'
+        run: |
+          mkdir -p build
+          curl --fail --location --retry 3 --output build/RuStore.apk https://static.rustore.ru/release/RuStore.apk
+
+      - name: Build and apply the patch bundle
+        if: github.ref_name == 'main' || github.ref_name == 'dev'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./gradlew clean :patches:buildAndroid --no-daemon
+          mkdir -p build/morphe
+          gh release download --repo MorpheApp/morphe-desktop --pattern '*-all.jar' --dir build/morphe
+          PATCH_BUNDLE=$(find patches/build/libs -maxdepth 1 -name '*.mpp' ! -name '*sources*' ! -name '*javadoc*' -print -quit)
+          DESKTOP_JAR=$(find build/morphe -name '*-all.jar' -print -quit)
+          java -jar "$DESKTOP_JAR" patch --force --patches "$PATCH_BUNDLE" --out build/rustore-privacy.apk --result-file build/patch-result.json build/RuStore.apk
+
+      - name: Audit launch-critical manifest components
+        if: github.ref_name == 'main' || github.ref_name == 'dev'
+        run: >-
+          python3 scripts/rustore_upstream.py audit-patched
+          --apk build/rustore-privacy.apk
+          --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt"
+
       # Semantic release runs its own Gradle build command.
       # Only dev and main branch will generate a release as specified by .releaserc
       - name: Release

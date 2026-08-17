@@ -73,6 +73,26 @@ FORBIDDEN_MANIFEST_ANCHORS = {
     "com.google.android.datatransport",
 }
 
+DISABLED_COMPONENT_PREFIXES = {
+    "com.google.android.datatransport",
+    "com.inappstory.sdk",
+    "com.kavsdk",
+    "com.my.target",
+    "com.vk.push",
+    "com.vk.superapp.logs",
+    "io.appmetrica",
+    "ru.mail.libverify",
+    "ru.mail.network",
+    "ru.mail.verify",
+    "ru.rustore.sdk.metrics",
+    "ru.rustore.sdk.pushclient.provider",
+    "ru.vk.store.feature.connect.session",
+    "ru.vk.store.feature.storeapp.install.referrer",
+    "sid.sdk.global.utils.sms",
+}
+
+INVALID_COMPONENT_PREFIXES = ("xav.", "xid.", "xo.", "xom.", "xu.")
+
 
 def run(*command: str) -> str:
     result = subprocess.run(command, check=True, text=True, capture_output=True)
@@ -170,6 +190,52 @@ def inspect_apk(args: argparse.Namespace) -> None:
     print(json.dumps(inspection, indent=2))
 
 
+def manifest_components(manifest: str) -> tuple[list[dict[str, object]], set[int]]:
+    component_tags = {"activity", "activity-alias", "service", "receiver", "provider"}
+    lines = manifest.splitlines()
+    components: list[dict[str, object]] = []
+    class_name_lines: set[int] = set()
+
+    for index, line in enumerate(lines):
+        stripped = line.lstrip()
+        element_match = re.match(r"E: ([\w-]+)(?:\s|$)", stripped)
+        if element_match is None or element_match.group(1) not in component_tags:
+            continue
+
+        element_indent = len(line) - len(stripped)
+        name: str | None = None
+        enabled: bool | None = None
+        for attribute_index in range(index + 1, len(lines)):
+            attribute_line = lines[attribute_index]
+            attribute_stripped = attribute_line.lstrip()
+            if not attribute_stripped:
+                continue
+            attribute_indent = len(attribute_line) - len(attribute_stripped)
+            if attribute_indent <= element_indent:
+                break
+            if attribute_indent != element_indent + 2 or not attribute_stripped.startswith("A:"):
+                continue
+
+            name_match = re.search(r":name\([^)]*\)=\"([^\"]+)\"", attribute_stripped)
+            if name_match is not None:
+                name = name_match.group(1)
+                class_name_lines.add(attribute_index)
+            enabled_match = re.search(
+                r":enabled\([^)]*\)=(?:\(type [^)]+\))?"
+                r"(true|false|0x[0-9a-fA-F]+)",
+                attribute_stripped,
+            )
+            if enabled_match is not None:
+                enabled = enabled_match.group(1).lower() not in {"false", "0x0"}
+
+        if name is not None:
+            components.append(
+                {"tag": element_match.group(1), "name": name, "enabled": enabled}
+            )
+
+    return components, class_name_lines
+
+
 def audit_patched(args: argparse.Namespace) -> None:
     badging = run(str(args.aapt), "dump", "badging", str(args.apk))
     permissions = set(re.findall(r"uses-permission: name='([^']+)'", badging))
@@ -178,14 +244,51 @@ def audit_patched(args: argparse.Namespace) -> None:
     manifest = run(
         str(args.aapt), "dump", "xmltree", str(args.apk), "AndroidManifest.xml"
     )
-    forbidden_anchors = sorted(
-        anchor for anchor in FORBIDDEN_MANIFEST_ANCHORS if anchor in manifest
+    components, class_name_lines = manifest_components(manifest)
+    invalid_component_names = sorted(
+        component["name"]
+        for component in components
+        if str(component["name"]).startswith(INVALID_COMPONENT_PREFIXES)
     )
-    if missing or forbidden or forbidden_anchors:
+    enabled_disabled_components: dict[str, list[str]] = {}
+    disabled_component_counts: dict[str, int] = {}
+    for prefix in sorted(DISABLED_COMPONENT_PREFIXES):
+        matches = [
+            component
+            for component in components
+            if str(component["name"]).startswith(prefix)
+        ]
+        disabled_component_counts[prefix] = len(matches)
+        active = sorted(
+            str(component["name"])
+            for component in matches
+            if component["enabled"] is not False
+        )
+        if not matches or active:
+            enabled_disabled_components[prefix] = active
+
+    manifest_lines = manifest.splitlines()
+    non_component_manifest = "\n".join(
+        line for index, line in enumerate(manifest_lines) if index not in class_name_lines
+    )
+    forbidden_anchors = sorted(
+        anchor
+        for anchor in FORBIDDEN_MANIFEST_ANCHORS
+        if anchor in non_component_manifest
+    )
+    if (
+        missing
+        or forbidden
+        or forbidden_anchors
+        or invalid_component_names
+        or enabled_disabled_components
+    ):
         raise RuntimeError(
             "Patched manifest audit failed; "
             f"missing={missing}, forbidden={forbidden}, "
-            f"forbidden_anchors={forbidden_anchors}"
+            f"forbidden_anchors={forbidden_anchors}, "
+            f"invalid_component_names={invalid_component_names}, "
+            f"enabled_or_missing_disabled_components={enabled_disabled_components}"
         )
     print(
         json.dumps(
@@ -194,6 +297,10 @@ def audit_patched(args: argparse.Namespace) -> None:
                 "forbidden_permissions_absent": sorted(FORBIDDEN_PERMISSIONS),
                 "forbidden_manifest_anchors_absent": sorted(
                     FORBIDDEN_MANIFEST_ANCHORS
+                ),
+                "disabled_component_counts": disabled_component_counts,
+                "invalid_component_prefixes_absent": list(
+                    INVALID_COMPONENT_PREFIXES
                 ),
             },
             indent=2,
