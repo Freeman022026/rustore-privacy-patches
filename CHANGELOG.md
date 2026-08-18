@@ -1,3 +1,9 @@
+## [1.1.3](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.2...v1.1.3) (2026-08-18)
+
+### 🐛 Bug Fixes
+
+* Resolve Update All crash ([3ca0aae](https://github.com/Freeman022026/rustore-privacy-patches/commit/3ca0aaeead5ec79f4340c973f55c91c5d2b9c674))
+
 ## [1.1.2](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.1...v1.1.2) (2026-08-17)
 
 ### 🐛 Bug Fixes
