@@ -4,7 +4,9 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.removeInstructions
 import app.morphe.patcher.patch.bytecodePatch
+import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 
 @Suppress("unused")
 val disableAdvertisementsPatch = bytecodePatch(
@@ -155,10 +157,26 @@ val skipUpdateAuthenticationPatch = bytecodePatch(
     dependsOn(validatedManifestPatch)
 
     execute {
+        val unitReferences = updateAuthSuggestFingerprint.method.implementation!!.instructions
+            .zipWithNext()
+            .mapNotNull { (fieldInstruction, returnInstruction) ->
+                if (
+                    fieldInstruction.opcode != Opcode.SGET_OBJECT ||
+                    returnInstruction.opcode != Opcode.RETURN_OBJECT
+                ) return@mapNotNull null
+
+                ((fieldInstruction as? ReferenceInstruction)?.reference as? FieldReference)
+                    ?.takeIf { it.definingClass == it.type }
+            }
+            .distinctBy { it.toString() }
+        require(unitReferences.size == 1) {
+            "Expected one completed-result singleton reference, found ${unitReferences.size}"
+        }
+
         updateAuthSuggestFingerprint.method.addInstructions(
             0,
             """
-                sget-object v0, Lhq0/f0;->f47417a:Lhq0/f0;
+                sget-object v0, ${unitReferences.single()}
                 return-object v0
             """
         )
