@@ -220,3 +220,187 @@ internal val updateAuthSuggestFingerprint = methodFingerprint(
 
 internal const val REPORT_APP_OPEN_REFERENCE =
     "Lio/appmetrica/analytics/AppMetrica;->reportAppOpen(Ljava/lang/String;)V"
+
+internal val blockedCoroutineWorkerClasses = listOf(
+    "Lcom/vk/push/pushsdk/work/CheckThatDeletedAppIsHostWorker;",
+    "Lcom/vk/push/pushsdk/work/InitiateMasterElectionsWorker;",
+    "Lcom/vk/push/pushsdk/work/multiprocess/MultiProcessWorker;",
+    "Lcom/vk/push/pushsdk/work/NotifyOldMasterWorker;",
+    "Lcom/vk/push/pushsdk/work/OneTimePushReceiveWorker;",
+    "Lcom/vk/push/pushsdk/work/scheduler/DeleteTokensFromServerWorker;",
+    "Lcom/vk/push/pushsdk/work/StopDeliverToRemovedAppWorker;",
+    "Lcom/vk/push/pushsdk/work/StopDeliverToUninstalledWork;",
+    "Lcom/vk/push/pushsdk/work/TokensHealthCheckWorker;",
+    "Lru/mail/omicron/MultiAccountWorkManagerExecutor\$MultiAccountOmicronSyncWorker;",
+    "Lru/rustore/sdk/pushclient/internal/work/ArbiterUpdateFallbackWorker;",
+    "Lru/rustore/sdk/pushclient/internal/work/DeletePushTokenIfNoHostsWorker;",
+    "Lru/vk/store/feature/connect/session/impl/presentation/ConnectDownloadWorker;",
+    "Lru/vk/store/feature/install/identifier/impl/presentation/InstallIdentifierSyncWorker;",
+    "Lru/vk/store/feature/launchericon/impl/presentation/LauncherIconUpdateWorker;",
+    "Lru/vk/store/feature/payments/subscription/update/impl/presentation/CancelSubscriptionSyncWorker;",
+    "Lru/vk/store/feature/showcase/startDestination/impl/presentation/UpdateStartDestinationWorker;",
+    "Lru/vk/store/feature/showcase/tabsOrder/impl/presentation/ShowcaseTabsOrderUpdateWorker;",
+    "Lru/vk/store/feature/storeapp/analytics/remote/impl/presentation/SendAnalyticsEventWorker;",
+    "Lru/vk/store/feature/storeapp/recommendation/start/trackingUrl/impl/data/PublisherTrackingWorker;",
+    "Lru/vk/store/feature/storeapp/review/remote/impl/presentation/AddAppReviewWorker;",
+    "Lru/vk/store/feature/usagestats/impl/presentation/UsageStatsCollectorWorker;"
+)
+
+internal val blockedBackgroundCoroutineWorkerFingerprints =
+    blockedCoroutineWorkerClasses.map { definingClass ->
+        Fingerprint(
+            custom = { method, classDef ->
+                classDef.type == definingClass &&
+                    method.name == "b" &&
+                    method.returnType == "Ljava/lang/Object;"
+            }
+        )
+    }
+
+internal val blockedWorkerClasses = listOf(
+    "Lru/mail/omicron/DefaultWorkManagerExecutor\$PeriodicWorker;",
+    "Lru/ok/tracer/disk/usage/DiskUsageWorker;",
+    "Lru/ok/tracer/heap/dumps/exceptions/ShrinkDumpWorker;",
+    "Lru/ok/tracer/upload/SampleUploadWorker;"
+)
+
+internal val blockedBackgroundWorkerFingerprints = blockedWorkerClasses.map { definingClass ->
+    Fingerprint(
+        custom = { method, classDef ->
+            classDef.type == definingClass &&
+                method.name == "doWork" &&
+                method.returnType == "Landroidx/work/c\$a;"
+        }
+    )
+}
+
+internal val omicronNetworkRequestFingerprint = methodFingerprint(
+    "Lt31/b;",
+    "a",
+    "Lt31/e;",
+    listOf("Lj31/d;", "Lt31/a;", "Ll31/d;")
+)
+
+internal val omicronDefaultScheduleFingerprint = methodFingerprint(
+    "Lru/mail/omicron/DefaultWorkManagerExecutor;",
+    "b",
+    "V",
+    listOf("J", "Z")
+)
+
+internal val omicronMultiAccountScheduleFingerprint = methodFingerprint(
+    "Lru/mail/omicron/MultiAccountWorkManagerExecutor;",
+    "a",
+    "V",
+    listOf("J", "J", "Z")
+)
+
+internal val installIdentifierInitializerFingerprint = methodFingerprint(
+    "Lru/vk/store/feature/install/identifier/impl/presentation/a;",
+    "a",
+    "Ljava/lang/Object;",
+    listOf("Lau0/d;")
+)
+
+internal val remoteAnalyticsInitializerFingerprint = methodFingerprint(
+    "Ly32/d;",
+    "a",
+    "Ljava/lang/Object;",
+    listOf("Lau0/d;")
+)
+
+internal val remoteAnalyticsSchedulerFingerprint = methodFingerprint(
+    "Lru/vk/store/feature/storeapp/analytics/remote/impl/presentation/b;",
+    "a",
+    "Ljava/lang/Object;",
+    listOf("Lau0/d;")
+)
+
+internal val usageStatsInitializerFingerprint = methodFingerprint(
+    "Lru/vk/store/feature/usagestats/impl/presentation/a;",
+    "a",
+    "Ljava/lang/Object;",
+    listOf("Lau0/d;")
+)
+
+internal val cancelSubscriptionInitializerFingerprint = methodFingerprint(
+    "Lru/vk/store/feature/payments/subscription/update/impl/presentation/a;",
+    "a",
+    "Ljava/lang/Object;",
+    listOf("Lau0/d;")
+)
+
+internal val launcherIconScheduleFingerprint = methodFingerprint(
+    "Lul1/i;",
+    "a",
+    "V"
+)
+
+internal val startDestinationScheduleFingerprint = methodFingerprint(
+    "Lk32/e;",
+    "a",
+    "V",
+    listOf("J", "Ldx0/c;")
+)
+
+internal val tabsOrderScheduleFingerprint = methodFingerprint(
+    "Lq32/g;",
+    "a",
+    "V"
+)
+
+internal val publisherTrackingScheduleFingerprint = methodFingerprint(
+    "Lmd2/e;",
+    "a",
+    "V",
+    listOf("Ljava/lang/String;", "Ljava/lang/String;")
+)
+
+internal val analyticsDispatchFingerprint = Fingerprint(
+    custom = { method, classDef ->
+        classDef.type == "Lso2/e;" && method.name == "d" && method.returnType == "V"
+    }
+)
+
+internal val analyticsUserIdFingerprint = Fingerprint(
+    custom = { method, classDef ->
+        classDef.type == "Lso2/e;" && method.name == "b" && method.returnType == "V"
+    }
+)
+
+internal val pushProviderOnInitializedFingerprint = Fingerprint(
+    custom = { method, classDef ->
+        classDef.type == "Lmd0/f;" &&
+            method.name == "invokeSuspend" &&
+            method.returnType == "Ljava/lang/Object;"
+    }
+)
+
+internal val pushAuthOnInitializedFingerprint = Fingerprint(
+    custom = { method, classDef ->
+        classDef.type == "Lkb0/l;" &&
+            method.name == "invokeSuspend" &&
+            method.returnType == "Ljava/lang/Object;"
+    }
+)
+
+internal val pushLifecycleMethods = mapOf(
+    "onActivityCreated" to listOf("Landroid/app/Activity;", "Landroid/os/Bundle;"),
+    "onActivityDestroyed" to listOf("Landroid/app/Activity;"),
+    "onActivityPaused" to listOf("Landroid/app/Activity;"),
+    "onActivityResumed" to listOf("Landroid/app/Activity;"),
+    "onActivitySaveInstanceState" to listOf("Landroid/app/Activity;", "Landroid/os/Bundle;"),
+    "onActivityStarted" to listOf("Landroid/app/Activity;"),
+    "onActivityStopped" to listOf("Landroid/app/Activity;")
+)
+
+internal val pushLifecycleFingerprints = pushLifecycleMethods.map { (name, parameters) ->
+    Fingerprint(
+        custom = { method, classDef ->
+            classDef.type == "Lgc0/a;" &&
+                method.name == name &&
+                method.returnType == "V" &&
+                method.parameterTypes.map(CharSequence::toString) == parameters
+        }
+    )
+}

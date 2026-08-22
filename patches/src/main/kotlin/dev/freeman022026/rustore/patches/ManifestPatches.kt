@@ -394,6 +394,7 @@ internal val analyticsManifestPatch = resourcePatch {
             "ru.vk.store.feature.storeapp.install.referrer" to
                 "xu.vk.store.feature.storeapp.install.referrer",
             "ru.rustore.sdk.metrics" to "xu.rustore.sdk.metrics",
+            "ru.ok.tracer" to "xu.ok.tracer",
             "io.appmetrica" to "xo.appmetrica",
             "com.vk.superapp.logs" to "xom.vk.superapp.logs",
             "com.google.android.datatransport" to "xom.google.android.datatransport"
@@ -425,7 +426,8 @@ val disablePushServicesPatch = resourcePatch(
                 "com.google.android.c2dm.permission.XECEIVE"
         )
         val prefixes = linkedMapOf(
-            "ru.rustore.sdk.pushclient.provider" to "xu.rustore.sdk.pushclient.provider",
+            "ru.rustore.sdk.pushclient" to "xu.rustore.sdk.pushclient",
+            "ru.vk.store.feature.push.client" to "xu.vk.store.feature.push.client",
             "com.vk.push" to "xom.vk.push"
         )
         document("AndroidManifest.xml").use { document ->
