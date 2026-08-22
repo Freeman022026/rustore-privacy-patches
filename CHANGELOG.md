@@ -1,3 +1,9 @@
+## [1.1.6](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.5...v1.1.6) (2026-08-22)
+
+### 🐛 Bug Fixes
+
+* **privacy:** keep background work update-only ([ada12e6](https://github.com/Freeman022026/rustore-privacy-patches/commit/ada12e651aa847b1241c32b962ed47d23b54b895))
+
 ## [1.1.5](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.4...v1.1.5) (2026-08-22)
 
 ### 🐛 Bug Fixes
