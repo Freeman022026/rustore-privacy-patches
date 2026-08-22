@@ -56,7 +56,7 @@ Morphe can automatically reapply a new patch-bundle release to the original APK 
 ## Supported version and bundle
 
 <!-- PATCHES_START EXPANDED -->
-Current bundle: [v1.1.4](https://github.com/Freeman022026/rustore-privacy-patches/releases/tag/v1.1.4) on `main`.
+Current bundle: [v1.1.5](https://github.com/Freeman022026/rustore-privacy-patches/releases/tag/v1.1.5) on `main`.
 
 ### RuStore
 
@@ -73,8 +73,8 @@ Supported versions: `1.108.0.2`
 | Disable verification hooks | Disables audited SMS, call, phone-state, SID, and Mail.ru verification hooks. |
 | Exclude Google Play apps from update checks | Excludes only apps whose recorded Android installer is Google Play from update requests. |
 | Hide gaming profile | Removes the gaming profile permission, hides both gaming buttons, and blocks navigation to the gaming profile. |
-| Skip update authentication | Skips the update authentication suggestion and returns a valid completed result. |
 | Restore secure-session compatibility | Adapts secure-session requests to RuStore 1.108 API changes for re-signed APKs. |
+| Skip update authentication | Skips the update authentication suggestion and returns a valid completed result. |
 
 <!-- PATCHES_END -->
 

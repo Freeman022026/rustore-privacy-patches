@@ -1,3 +1,9 @@
+## [1.1.5](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.4...v1.1.5) (2026-08-22)
+
+### 🐛 Bug Fixes
+
+* adapt patches to RuStore 1.108 ([3bd514f](https://github.com/Freeman022026/rustore-privacy-patches/commit/3bd514f6d8a2d9d4c17bcf843eb331edcdbcfc43))
+
 ## [1.1.4](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.3...v1.1.4) (2026-08-22)
 
 ### 🐛 Bug Fixes
