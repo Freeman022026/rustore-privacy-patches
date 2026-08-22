@@ -6,7 +6,7 @@
 [![Release](https://github.com/Freeman022026/rustore-privacy-patches/actions/workflows/release.yml/badge.svg)](https://github.com/Freeman022026/rustore-privacy-patches/actions/workflows/release.yml)
 [![Latest release](https://img.shields.io/github/v/release/Freeman022026/rustore-privacy-patches)](https://github.com/Freeman022026/rustore-privacy-patches/releases/latest)
 
-This repository publishes selectable Morphe patches for the official RuStore Android app. The patches cover advertising, analytics, push services, verification hooks, background activity, Kaspersky scans, the gaming profile, and update authentication.
+This repository publishes selectable Morphe patches for the official RuStore Android app. The patches cover advertising, analytics, push services, verification hooks, background activity, Kaspersky scans, update filtering, secure-session compatibility, the gaming profile, and update authentication.
 
 The repository contains patches only. It does not redistribute RuStore or any patched APK.
 
@@ -26,9 +26,11 @@ When RuStore asks for notification access or exclusion from battery optimization
 
 ## Available patches
 
-All nine patches are enabled by default, but Morphe lets you switch them on or off separately. The bundle includes patches for invasive permissions, advertisements, analytics and trackers, push services, verification hooks, background hooks, periodic Kaspersky scans, the gaming profile, and update authentication.
+All eleven patches are enabled by default, but Morphe lets you switch them on or off separately. The bundle includes patches for invasive permissions, advertisements, analytics and trackers, push services, verification hooks, background hooks, periodic Kaspersky scans, update-request filtering, secure-session compatibility for re-signed APKs, the gaming profile, and update authentication.
 
 The advertisements patch forces the "Agree to receive advertising materials" setting off. The checkbox is unchecked when displayed, and tapping it cannot opt the patched app back in.
+
+The update filter excludes only apps whose Android installer-of-record is `com.android.vending`. Apps installed through another store, a browser, or ADB remain eligible for RuStore update checks. If RuStore later installs or updates the same correctly signed package, Android records RuStore as its installer and keeps the app's existing data; incompatible signatures cannot be updated in place.
 
 The invasive-permissions patch neutralizes the privileged `INSTALL_PACKAGES` declaration. RuStore keeps `REQUEST_INSTALL_PACKAGES` and the other capabilities needed for package discovery and user-approved installs.
 
@@ -63,14 +65,16 @@ Supported versions: `1.108.0.2`
 | Patch | Description |
 | --- | --- |
 | Disable Kaspersky background scan | Disables periodic Kaspersky scheduling and reports disabled workers as successfully completed. |
-| Disable advertisements | Removes ad providers and ad identifiers, returns an empty ad list, and keeps advertising consent disabled. |
-| Disable analytics and trackers | Disables AppMetrica, MyTracker, AltCraft, Radar, install referrer, metrics, and audited logging transports. |
+| Disable advertisements | Removes ad providers, sanitizes ad identifiers, returns an empty ad list, and keeps advertising consent disabled. |
+| Disable analytics and trackers | Disables audited analytics transports and replaces the stable request device identifier. |
 | Disable background hooks | Disables audited boot, network-state, VPN, and Connect session hooks. |
 | Disable invasive permissions | Removes privileged install, location, storage, billing, USB, and vendor data access while preserving user-driven installs. |
 | Disable push services | Disables RuStore and VK push initialization, services, and audited push receivers. |
 | Disable verification hooks | Disables audited SMS, call, phone-state, SID, and Mail.ru verification hooks. |
+| Exclude Google Play apps from update checks | Excludes only apps whose recorded Android installer is Google Play from update requests. |
 | Hide gaming profile | Removes the gaming profile permission, hides both gaming buttons, and blocks navigation to the gaming profile. |
 | Skip update authentication | Skips the update authentication suggestion and returns a valid completed result. |
+| Restore secure-session compatibility | Adapts secure-session requests to RuStore 1.108 API changes for re-signed APKs. |
 
 <!-- PATCHES_END -->
 

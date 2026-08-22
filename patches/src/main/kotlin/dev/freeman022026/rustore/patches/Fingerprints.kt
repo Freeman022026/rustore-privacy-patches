@@ -82,6 +82,31 @@ internal val rawAdvertisementRepositoryGetFingerprint = methodFingerprint(
     )
 )
 
+private val advertisementIdsClassFingerprint = Fingerprint(
+    strings = listOf("AdvertisementIds(gaid=", ", hoaid=", ", androidId=")
+)
+
+internal val advertisementIdsConstructorFingerprint = Fingerprint(
+    classFingerprint = advertisementIdsClassFingerprint,
+    name = "<init>",
+    returnType = "V",
+    parameters = List(6) { "Ljava/lang/String;" }
+)
+
+internal val appVersionInfoListFingerprint = methodFingerprint(
+    "Lfb2/l;",
+    "c",
+    "Ljava/io/Serializable;",
+    listOf("Lfb2/l;", "Ljava/lang/String;", "Lau0/d;")
+)
+
+internal val requestDeviceIdFingerprint = methodFingerprint(
+    "Liq2/l;",
+    "a",
+    "Ljava/lang/String;",
+    strings = listOf("android_id")
+)
+
 internal val altCraftSendFingerprint = methodFingerprint(
     "Lxo2/b;",
     "b",

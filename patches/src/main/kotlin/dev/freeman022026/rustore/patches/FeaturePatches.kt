@@ -5,13 +5,14 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.removeInstructions
 import app.morphe.patcher.patch.bytecodePatch
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 
 @Suppress("unused")
 val disableAdvertisementsPatch = bytecodePatch(
     name = "Disable advertisements",
-    description = "Removes ad providers and ad identifiers, returns an empty ad list, and keeps advertising consent disabled.",
+    description = "Removes ad providers, sanitizes ad identifiers, returns an empty ad list, and keeps advertising consent disabled.",
     default = true
 ) {
     compatibleWith(RUSTORE_COMPATIBILITY)
@@ -25,21 +26,66 @@ val disableAdvertisementsPatch = bytecodePatch(
                 return-object v0
             """
         )
+        advertisementIdsConstructorFingerprint.method.addInstructions(
+            0,
+            """
+                const-string p1, "00000000-0000-0000-0000-000000000000"
+                const-string p2, "00000000-0000-0000-0000-000000000000"
+                const/4 p3, 0x0
+                const/4 p4, 0x0
+                const/4 p5, 0x0
+            """
+        )
         settingConstructorFingerprint.method.addInstruction(0, "const/4 p6, 0x0")
         agreementSettingConstructorFingerprint.method.addInstruction(0, "const/4 p3, 0x0")
     }
 }
 
 @Suppress("unused")
+val excludeGooglePlayAppsFromUpdateChecksPatch = bytecodePatch(
+    name = "Exclude Google Play apps from update checks",
+    description = "Excludes only apps whose recorded Android installer is Google Play from update requests.",
+    default = true
+) {
+    compatibleWith(RUSTORE_COMPATIBILITY)
+
+    execute {
+        appVersionInfoListFingerprint.method.apply {
+            val instructions = implementation!!.instructions
+            val equalsIndex = instructions.withIndex().single { (_, instruction) ->
+                (instruction as? ReferenceInstruction)?.reference?.toString() ==
+                    "Ljava/lang/Object;->equals(Ljava/lang/Object;)Z"
+            }.index
+            val equalsResult = instructions[equalsIndex + 1]
+            require(equalsResult.opcode == Opcode.MOVE_RESULT)
+            val equalsRegister = (equalsResult as OneRegisterInstruction).registerA
+
+            addInstruction(
+                equalsIndex + 2,
+                "xor-int/lit8 v$equalsRegister, v$equalsRegister, 0x1"
+            )
+            addInstruction(0, "const-string p1, \"com.android.vending\"")
+        }
+    }
+}
+
+@Suppress("unused")
 val disableAnalyticsAndTrackersPatch = bytecodePatch(
     name = "Disable analytics and trackers",
-    description = "Disables AppMetrica, MyTracker, AltCraft, Radar, install referrer, metrics, and audited logging transports.",
+    description = "Disables audited analytics transports and replaces the stable request device identifier.",
     default = true
 ) {
     compatibleWith(RUSTORE_COMPATIBILITY)
     dependsOn(analyticsManifestPatch)
 
     execute {
+        requestDeviceIdFingerprint.method.addInstructions(
+            0,
+            """
+                const-string v0, "00000000-0000-0000-0000-000000000000"
+                return-object v0
+            """
+        )
         listOf(appMetricaActivateFingerprint, myTrackerInitializeFingerprint).forEach { fingerprint ->
             fingerprint.method.addInstruction(0, "return-void")
         }
