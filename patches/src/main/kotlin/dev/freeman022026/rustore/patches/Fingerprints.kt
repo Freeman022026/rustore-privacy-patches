@@ -66,24 +66,24 @@ internal val agreementSettingConstructorFingerprint = Fingerprint(
 )
 
 internal val rawAdvertisementRepositoryGetFingerprint = methodFingerprint(
-    "Lu41/l0;",
+    "Li81/u0;",
     "a",
     "Ljava/lang/Object;",
     listOf(
         "Ljava/util/List;",
-        "Lp41/c;",
+        "Ld81/c;",
         "Ljava/util/List;",
-        "Lm41/c;",
+        "La81/d;",
         "Ljava/util/Set;",
         "Ljava/util/UUID;",
         "Z",
         "Z",
-        "Lnq0/c;"
+        "Lau0/d;"
     )
 )
 
 internal val altCraftSendFingerprint = methodFingerprint(
-    "Lek2/b;",
+    "Lxo2/b;",
     "b",
     "V",
     listOf(
@@ -91,7 +91,7 @@ internal val altCraftSendFingerprint = methodFingerprint(
         "Ljava/util/Map;",
         "Ljava/lang/String;",
         "Z",
-        "Lyj2/f;"
+        "Lro2/f;"
     )
 )
 
@@ -99,7 +99,7 @@ internal val altCraftScheduleFingerprint = methodFingerprint(
     "Lru/vk/store/lib/analytics/system/altcraft/presentation/AltCraftFlushEventsWorker\$a;",
     "a",
     "V",
-    listOf("Lmb/k0;", "J"),
+    listOf("Ltb/j0;", "J"),
     listOf("AltCraftFlushEventsWorker")
 )
 
@@ -107,14 +107,14 @@ internal val altCraftWorkerFingerprint = methodFingerprint(
     "Lru/vk/store/lib/analytics/system/altcraft/presentation/AltCraftFlushEventsWorker;",
     "b",
     "Ljava/lang/Object;",
-    listOf("Llq0/e;")
+    listOf("Lyt0/e;")
 )
 
 internal val radarScheduleFingerprint = methodFingerprint(
     "Lru/vk/store/lib/analytics/system/radar/presentation/RadarFlushSnapshotWorker\$a;",
     "a",
     "V",
-    listOf("Lmb/k0;", "J"),
+    listOf("Ltb/j0;", "J"),
     listOf("RadarFlushSnapshotsWorker")
 )
 
@@ -122,7 +122,7 @@ internal val radarWorkerFingerprint = methodFingerprint(
     "Lru/vk/store/lib/analytics/system/radar/presentation/RadarFlushSnapshotWorker;",
     "b",
     "Ljava/lang/Object;",
-    listOf("Llq0/e;")
+    listOf("Lyt0/e;")
 )
 
 private val kasperskyScannerDtoClassFingerprint = Fingerprint(
@@ -140,7 +140,7 @@ internal val kasperskyScheduleFingerprint = methodFingerprint(
     "Lru/vk/store/feature/kaspersky/impl/presentation/KasperskyScannerWorker\$a;",
     "a",
     "Ljava/lang/Object;",
-    listOf("Lmb/k0;", "Lnq0/c;"),
+    listOf("Ltb/j0;", "Lau0/d;"),
     listOf("PeriodicKasperskyScanner")
 )
 
@@ -148,24 +148,24 @@ internal val kasperskyWorkerFingerprint = methodFingerprint(
     "Lru/vk/store/feature/kaspersky/impl/presentation/KasperskyScannerWorker;",
     "b",
     "Ljava/lang/Object;",
-    listOf("Llq0/e;")
+    listOf("Lyt0/e;")
 )
 
 internal val mineViewModelOpenGameCenterFingerprint = methodFingerprint(
-    "Ltj1/j8;",
-    "v0",
+    "Llo1/z8;",
+    "C0",
     "V",
     strings = listOf("gameProfile.click")
 )
 
 internal val gameCenterV2ButtonFingerprint = methodFingerprint(
-    "Ltc1/r0;",
+    "Ldh1/t0;",
     "d",
     "V",
     listOf(
         "Lkotlin/jvm/functions/Function0;",
-        "Lh2/j;",
-        "Ltc1/w;",
+        "Lk2/j;",
+        "Ldh1/w;",
         "Landroidx/compose/runtime/a;",
         "I"
     ),
@@ -173,13 +173,13 @@ internal val gameCenterV2ButtonFingerprint = methodFingerprint(
 )
 
 internal val gameCenterV1ButtonFingerprint = methodFingerprint(
-    "Ltc1/u;",
+    "Ldh1/u;",
     "e",
     "V",
     listOf(
         "Lkotlin/jvm/functions/Function0;",
-        "Lh2/j;",
-        "Ltc1/w;",
+        "Lk2/j;",
+        "Ldh1/w;",
         "Landroidx/compose/runtime/a;",
         "I"
     ),
@@ -187,10 +187,10 @@ internal val gameCenterV1ButtonFingerprint = methodFingerprint(
 )
 
 internal val updateAuthSuggestFingerprint = methodFingerprint(
-    "Lm61/e;",
+    "Laa1/e;",
     "a",
     "Ljava/lang/Object;",
-    listOf("Lnq0/c;")
+    listOf("Lau0/d;")
 )
 
 internal const val REPORT_APP_OPEN_REFERENCE =

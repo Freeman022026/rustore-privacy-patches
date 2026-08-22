@@ -21,7 +21,7 @@ val disableAdvertisementsPatch = bytecodePatch(
         rawAdvertisementRepositoryGetFingerprint.method.addInstructions(
             0,
             """
-                sget-object v0, Liq0/b0;->f56293a:Liq0/b0;
+                sget-object v0, Lvt0/y;->f122543a:Lvt0/y;
                 return-object v0
             """
         )
@@ -61,7 +61,7 @@ val disableAnalyticsAndTrackersPatch = bytecodePatch(
             0,
             """
                 const-string v0, "AltCraftFlushEventsWorker"
-                invoke-virtual {p0, v0}, Lmb/k0;->a(Ljava/lang/String;)Lmb/b0;
+                invoke-virtual {p0, v0}, Ltb/j0;->a(Ljava/lang/String;)Ltb/a0;
                 return-void
             """
         )
@@ -78,7 +78,7 @@ val disableAnalyticsAndTrackersPatch = bytecodePatch(
             0,
             """
                 const-string v0, "RadarFlushSnapshotsWorker"
-                invoke-virtual {p0, v0}, Lmb/k0;->a(Ljava/lang/String;)Lmb/b0;
+                invoke-virtual {p0, v0}, Ltb/j0;->a(Ljava/lang/String;)Ltb/a0;
                 return-void
             """
         )
@@ -114,7 +114,7 @@ val disableKasperskyBackgroundScanPatch = bytecodePatch(
             0,
             """
                 const-string v0, "PeriodicKasperskyScanner"
-                invoke-virtual {p1, v0}, Lmb/k0;->a(Ljava/lang/String;)Lmb/b0;
+                invoke-virtual {p1, v0}, Ltb/j0;->a(Ljava/lang/String;)Ltb/a0;
                 invoke-static {}, Ljava/util/UUID;->randomUUID()Ljava/util/UUID;
                 move-result-object v0
                 return-object v0
