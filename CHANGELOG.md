@@ -2,11 +2,11 @@
 
 ### 🐛 Bug Fixes
 
-* support RuStore 1.108.0.2 ([1bb0360](https://github.com/Freeman022026/rustore-privacy-patches/commit/1bb03601ffca589e03800fd69dffd94b9df5457f))
+* **RuStore:** support RuStore 1.108.0.2 ([1bb0360](https://github.com/Freeman022026/rustore-privacy-patches/commit/1bb03601ffca589e03800fd69dffd94b9df5457f))
 
 ### 🚀 Updated App Support
 
-* support RuStore 1.108.0.2 ([f59d23e](https://github.com/Freeman022026/rustore-privacy-patches/commit/f59d23e46af8c9d2aedfc023cf25291f8d6e0844))
+* **RuStore:** support RuStore 1.108.0.2 ([f59d23e](https://github.com/Freeman022026/rustore-privacy-patches/commit/f59d23e46af8c9d2aedfc023cf25291f8d6e0844))
 
 ## [1.1.3](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.2...v1.1.3) (2026-08-18)
 
