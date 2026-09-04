@@ -1,3 +1,9 @@
+## [1.1.10](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.9...v1.1.10) (2026-09-04)
+
+### 🚀 Updated App Support
+
+* **RuStore:** support RuStore 1.109.1.0 ([431fe65](https://github.com/Freeman022026/rustore-privacy-patches/commit/431fe65e25e2793330d5269c0abf178f5f21e0f5))
+
 ## [1.1.9](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.8...v1.1.9) (2026-09-04)
 
 ### 🚀 Updated App Support
