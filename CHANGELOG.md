@@ -1,3 +1,9 @@
+## [1.1.11](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.10...v1.1.11) (2026-09-11)
+
+### 🐛 Bug Fixes
+
+* **RuStore:** block direct telemetry and persisted push services ([c49e4e5](https://github.com/Freeman022026/rustore-privacy-patches/commit/c49e4e5dd6e6b8ebe2d52adb83e1cad56a4e4888))
+
 ## [1.1.10](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.9...v1.1.10) (2026-09-04)
 
 ### 🚀 Updated App Support

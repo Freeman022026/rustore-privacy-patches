@@ -115,7 +115,7 @@ Run `python3 scripts/test_rustore_upstream.py` to check the review gates. To ins
 ## Supported version and bundle
 
 <!-- PATCHES_START EXPANDED -->
-Current bundle: [v1.1.10](https://github.com/Freeman022026/rustore-privacy-patches/releases/tag/v1.1.10) on `main`.
+Current bundle: [v1.1.11](https://github.com/Freeman022026/rustore-privacy-patches/releases/tag/v1.1.11) on `main`.
 
 ### RuStore
 
