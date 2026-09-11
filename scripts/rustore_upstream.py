@@ -95,6 +95,11 @@ DISABLED_COMPONENT_PREFIXES = {
     "sid.sdk.global.utils.sms",
 }
 
+DEVICE_IDENTIFIER_STUBS = {
+    "z41.hj": "a()Ljava/lang/String;",
+    "b40.c": "a(Landroid/content/Context;)Ljava/lang/String;",
+}
+
 INVALID_COMPONENT_PREFIXES = ("xav.", "xid.", "xo.", "xom.", "xu.")
 WORK_MANAGER_RESCHEDULE_RECEIVER = (
     "androidx.work.impl.background.systemalarm.RescheduleReceiver"
@@ -336,6 +341,10 @@ def audit_patched(args: argparse.Namespace) -> None:
         code = run(str(args.apkanalyzer), "dex", "code", "--class", class_name,
                    "--method", method, str(args.apk))
         verify_instruction_prefix(code, expected, class_name)
+    for class_name, method in DEVICE_IDENTIFIER_STUBS.items():
+        code = run(str(args.apkanalyzer), "dex", "code", "--class", class_name,
+                   "--method", method, str(args.apk))
+        verify_device_identifier_stub(code, class_name)
     startup_code = run(str(args.apkanalyzer), "dex", "code", "--class", "ru.vk.store.App",
                        "--method", "onCreate()V", str(args.apk))
     verify_instruction_prefix(startup_code, push_service_cleanup_prefix(), "Push service cleanup")
@@ -424,6 +433,7 @@ def audit_patched(args: argparse.Namespace) -> None:
                 "work_manager_boot_rescheduler_preserved": True,
                 "google_ad_id_lookup_stubbed": True,
                 "direct_telemetry_stubbed": sorted(telemetry_stubs),
+                "stable_device_identifiers_stubbed": sorted(DEVICE_IDENTIFIER_STUBS),
                 "persisted_push_services_disabled_at_startup": True,
             },
             indent=2,
@@ -451,6 +461,14 @@ def verify_google_ad_id_stub(code: str) -> None:
         "return-object v0",
     ]
     verify_instruction_prefix(code, expected, "Google advertising-ID lookup")
+
+
+def verify_device_identifier_stub(code: str, name: str) -> None:
+    expected = [
+        'const-string v0, "00000000-0000-0000-0000-000000000000"',
+        "return-object v0",
+    ]
+    verify_instruction_prefix(code, expected, name)
 
 
 def push_service_cleanup_prefix() -> list[str]:

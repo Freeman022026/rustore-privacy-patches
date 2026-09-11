@@ -6,7 +6,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from rustore_upstream import inventory_diff, promote, readable_packages, verify_google_ad_id_stub, verify_instruction_prefix, push_service_cleanup_prefix
+from rustore_upstream import inventory_diff, promote, readable_packages, verify_device_identifier_stub, verify_google_ad_id_stub, verify_instruction_prefix, push_service_cleanup_prefix
 
 
 def main() -> None:
@@ -41,6 +41,18 @@ def main() -> None:
             pass
         else:
             raise AssertionError("Invalid or late advertising-ID stub passed")
+    device_stub = ('\n.method public static a\n    .registers 3\n'
+                   '    const-string v0, "00000000-0000-0000-0000-000000000000"\n'
+                   '    return-object v0\n')
+    verify_device_identifier_stub(device_stub, "device identifier")
+    for broken in ("invoke-static {}, Lsdk;->read()Ljava/lang/String;\n" + device_stub,
+                   device_stub.replace("00000000-0000-0000", "11111111-1111-1111")):
+        try:
+            verify_device_identifier_stub(broken, "device identifier")
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError("Invalid device-identifier stub passed")
     baseline = {
         "apk_sha256": "audited-apk",
         "native_libraries": {

@@ -243,6 +243,21 @@ internal val googleAdvertisingIdFingerprint = methodFingerprint(
     listOf("Creating AdvertisingIdClient")
 )
 
+internal val rustoreSdkDeviceIdFingerprint = methodFingerprint(
+    "Lz41/hj;",
+    "a",
+    "Ljava/lang/String;",
+    strings = listOf("android_id", "value")
+)
+
+internal val vkSdkDeviceIdFingerprint = methodFingerprint(
+    "Lb40/c;",
+    "a",
+    "Ljava/lang/String;",
+    listOf("Landroid/content/Context;"),
+    listOf("__vk_device_id__", "next_device_id is null or empty: ")
+)
+
 internal val autoUpdateForegroundRestrictionFingerprint = Fingerprint(
     custom = { method, classDef ->
         classDef.type == "Lwj1/l;" &&

@@ -26,7 +26,7 @@ For automatic updates, allow RuStore notifications and background operation when
 
 ## Available patches
 
-All twelve patches are enabled by default, but Morphe lets you switch them on or off separately. The bundle includes patches for invasive permissions, advertisements, analytics and trackers, push services, verification hooks, background hooks, periodic Kaspersky scans, update-request filtering, secure-session compatibility for re-signed APKs, the gaming profile, update authentication, and a strict update-only background worker policy.
+All fourteen patches are enabled by default, but Morphe lets you switch them on or off separately. The bundle includes patches for invasive permissions, advertisements, analytics and trackers, the RuStore and VK SDK device identifiers, push services, verification hooks, background hooks, periodic Kaspersky scans, update-request filtering, secure-session compatibility for re-signed APKs, the gaming profile, update authentication, and a strict update-only background worker policy.
 
 The advertisements patch forces the "Agree to receive advertising materials" setting off. The checkbox is unchecked when displayed, and tapping it cannot opt the patched app back in.
 
@@ -35,6 +35,8 @@ It also makes Google's shared advertising-ID lookup return the zero UUID with li
 The update filter excludes only apps whose Android installer-of-record is `com.android.vending`. Apps installed through another store, a browser, or ADB remain eligible for RuStore update checks. If RuStore later installs or updates the same correctly signed package, Android records RuStore as its installer and keeps the app's existing data; incompatible signatures cannot be updated in place.
 
 Update checks still send eligible installed-package information to RuStore: package names, version codes, installer/source, update owner where available, system-app flag, first-install time, and app status. The device-info interceptor also sends manufacturer/model, Android version and SDK level, language, and RuStore version; its User-Agent includes supported CPU architectures. The analytics patch replaces the stable `deviceId` value with the zero UUID, but leaves these compatibility fields intact. Disabling advertising and analytics does not make store browsing, downloads, or update checks anonymous.
+
+Two additional identifiers have their own patches. The RuStore SDK computes a device identifier from hardware values and the Android ID and sends it as the `Device-Id` header on payment, session, and pay-auth requests; the RuStore SDK device identifier patch replaces it with the zero UUID. The VK SDK stores a fingerprint in `__vk_device_id__` that mixes hardware values with the Android ID, so it survives clearing app data; the VK SDK device identifier patch replaces the value returned to VK ID and VK Pay request paths with the zero UUID. Payment flows are covered by bytecode audits only, so disable the RuStore SDK device identifier patch if RuStore Pay misbehaves.
 
 A short app-scoped capture on 2026-09-11 exposed paths missed by the earlier worker audit: direct metrics sending to `stats-dg.rustore.ru`, TNS/Mediascope session tracking, and InAppStory initialization. The analytics patch now stops metrics collection and sending, returns immediately from the Mediascope tracking use case, and leaves InAppStory uninitialized. Story content is therefore unavailable. These entry points run independently of WorkManager; blocking their workers or manifest components alone was insufficient.
 

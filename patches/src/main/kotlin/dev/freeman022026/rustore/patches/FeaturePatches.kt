@@ -166,6 +166,44 @@ val disableAnalyticsAndTrackersPatch = bytecodePatch(
 }
 
 @Suppress("unused")
+val replaceRuStoreSdkDeviceIdentifierPatch = bytecodePatch(
+    name = "Replace RuStore SDK device identifier",
+    description = "Replaces the RuStore SDK device identifier sent with payment and session requests with the zero UUID.",
+    default = true
+) {
+    compatibleWith(RUSTORE_COMPATIBILITY)
+
+    execute {
+        rustoreSdkDeviceIdFingerprint.method.addInstructions(
+            0,
+            """
+                const-string v0, "00000000-0000-0000-0000-000000000000"
+                return-object v0
+            """
+        )
+    }
+}
+
+@Suppress("unused")
+val replaceVkSdkDeviceIdentifierPatch = bytecodePatch(
+    name = "Replace VK SDK device identifier",
+    description = "Replaces the VK SDK device fingerprint sent by VK ID and VK Pay request paths with the zero UUID.",
+    default = true
+) {
+    compatibleWith(RUSTORE_COMPATIBILITY)
+
+    execute {
+        vkSdkDeviceIdFingerprint.method.addInstructions(
+            0,
+            """
+                const-string v0, "00000000-0000-0000-0000-000000000000"
+                return-object v0
+            """
+        )
+    }
+}
+
+@Suppress("unused")
 val restrictBackgroundWorkToUpdatesPatch = bytecodePatch(
     name = "Restrict background work to updates",
     description = "Keeps only the workers required for automatic updates and allows update checks to run while RuStore is foreground or background.",
