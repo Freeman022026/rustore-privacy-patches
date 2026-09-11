@@ -1,3 +1,9 @@
+## [1.1.12](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.11...v1.1.12) (2026-09-11)
+
+### 🐛 Bug Fixes
+
+* **RuStore:** replace SDK device identifiers ([91ff20e](https://github.com/Freeman022026/rustore-privacy-patches/commit/91ff20e7f9116501c13233cbbfdf65765f5de055))
+
 ## [1.1.11](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.10...v1.1.11) (2026-09-11)
 
 ### 🐛 Bug Fixes

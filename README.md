@@ -117,7 +117,7 @@ Run `python3 scripts/test_rustore_upstream.py` to check the review gates. To ins
 ## Supported version and bundle
 
 <!-- PATCHES_START EXPANDED -->
-Current bundle: [v1.1.11](https://github.com/Freeman022026/rustore-privacy-patches/releases/tag/v1.1.11) on `main`.
+Current bundle: [v1.1.12](https://github.com/Freeman022026/rustore-privacy-patches/releases/tag/v1.1.12) on `main`.
 
 ### RuStore
 
@@ -134,6 +134,8 @@ Supported versions: `1.109.1.0`
 | Disable verification hooks | Disables audited SMS, call, phone-state, SID, and Mail.ru verification hooks. |
 | Exclude Google Play apps from update checks | Excludes only apps whose recorded Android installer is Google Play from update requests. |
 | Hide gaming profile | Removes the gaming profile permission, hides both gaming buttons, and blocks navigation to the gaming profile. |
+| Replace RuStore SDK device identifier | Replaces the RuStore SDK device identifier sent with payment and session requests with the zero UUID. |
+| Replace VK SDK device identifier | Replaces the VK SDK device fingerprint sent by VK ID and VK Pay request paths with the zero UUID. |
 | Restore secure-session compatibility | Adapts secure-session requests to RuStore 1.108 API changes for re-signed APKs. |
 | Restrict background work to updates | Keeps only the workers required for automatic updates and allows update checks to run while RuStore is foreground or background. |
 | Skip update authentication | Skips the update authentication suggestion and returns a valid completed result. |
