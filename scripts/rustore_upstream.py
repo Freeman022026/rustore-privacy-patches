@@ -96,8 +96,8 @@ DISABLED_COMPONENT_PREFIXES = {
 }
 
 DEVICE_IDENTIFIER_STUBS = {
-    "z41.hj": "a()Ljava/lang/String;",
-    "b40.c": "a(Landroid/content/Context;)Ljava/lang/String;",
+    "vt2.g": "a()Ljava/lang/String;",
+    "x20.c": "a(Landroid/content/Context;)Ljava/lang/String;",
 }
 
 INVALID_COMPONENT_PREFIXES = ("xav.", "xid.", "xo.", "xom.", "xu.")
@@ -330,12 +330,12 @@ def audit_patched(args: argparse.Namespace) -> None:
         str(args.apk),
     )
     verify_google_ad_id_stub(ad_code)
-    unit_stub = ["sget-object v0, Ltt0/e0;->a:Ltt0/e0;", "return-object v0"]
+    unit_stub = ["sget-object v0, Lut0/e0;->a:Lut0/e0;", "return-object v0"]
     telemetry_stubs = {
-        "x41.i0": ("invoke()Ljava/lang/Object;", unit_stub),
-        "x41.t0": ("a(Ljava/util/List;)V", ["return-void"]),
-        "hn1.d": ("a(Lzt0/c;)Ljava/lang/Object;", unit_stub),
-        "qn2.l": ("b(Lzt0/c;)Ljava/lang/Object;", unit_stub),
+        "z41.d0": ("invoke()Ljava/lang/Object;", unit_stub),
+        "z41.o0": ("a(Ljava/util/List;)V", ["return-void"]),
+        "nn1.d": ("a(Lau0/d;)Ljava/lang/Object;", unit_stub),
+        "sp2.l": ("b(Lau0/d;)Ljava/lang/Object;", unit_stub),
     }
     for class_name, (method, expected) in telemetry_stubs.items():
         code = run(str(args.apkanalyzer), "dex", "code", "--class", class_name,
