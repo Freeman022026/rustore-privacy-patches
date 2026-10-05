@@ -215,6 +215,14 @@ internal val inAppStoryInitializeFingerprint = methodFingerprint(
     listOf("story.initilized", "story_user_id")
 )
 
+internal val networkPolicyLoadFingerprint = methodFingerprint(
+    "Ljp0/l;",
+    "a",
+    "Ljava/lang/String;",
+    listOf("Landroid/content/Context;"),
+    strings = listOf("[Network Policy]: load remote config")
+)
+
 internal val applicationOnCreateFingerprint = methodFingerprint(
     "Lru/vk/store/App;", "onCreate", "V",
     strings = listOf("App process started: version=")

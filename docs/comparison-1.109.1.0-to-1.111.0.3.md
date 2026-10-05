@@ -65,10 +65,44 @@ Both were verified by exact-string comparison across the two DEX sets:
 | Endpoint | Purpose | Status |
 | --- | --- | --- |
 | `pushapi.mail.ru`, `pushapi-dg.mail.ru`, `notifycdn.mail.ru`, `notifycdn-dg.mail.ru` | Mail.ru push delivery hosts, alongside the existing `clientapi.mail.ru` (`https://clientapi.mail.ru/tracer`) | inert — the whole `com.vk.push` and `ru.rustore.sdk.pushclient` namespace is disabled by the push patch |
-| `https://remote-mobile-config.studilka.ru/getConfig?app_id=7281790` | remote configuration fetch, referenced from the expanded `jp0` module (2 → 22 classes) | no device identifier attached; not a tracking vector |
+| `https://remote-mobile-config.studilka.ru/getConfig?app_id=7281790` | remote network policy fetch, referenced from the expanded `jp0` module (2 → 22 classes) | **blocked by the bundle** — see the next section |
 
 `api.vk.ru` also appears as a literal for the first time (2 occurrences); `api.vk.com` is already
 in the neutralised analytics and advertisement paths.
+
+## The remote network policy is a security downgrade, and is now blocked
+
+This was initially assessed as a harmless remote-configuration fetch because the request carries
+no device identifier. Reading the module shows that assessment was wrong about what matters: the
+document it downloads is applied to the app's own TLS configuration.
+
+`jp0/l.a(Context)` performs an unauthenticated HTTPS GET of a fixed URL and returns the body.
+The body is parsed by `jp0/n` into a policy with these fields:
+
+| Field | Effect |
+| --- | --- |
+| `certs[].cert` | PEM trust anchors installed into a per-revision key store (`network_policy_certificate_<revision>`) |
+| `override_domain` / `override_api_domain` | replaces the API host the app talks to |
+| `override_static_host` | replaces the static-content host |
+| `revision` | monotonic counter; older revisions are rejected |
+
+Fetching that URL on 2026-10-05 returned three certificates and an empty `override_domain`:
+
+- **Russian Trusted Root CA** (Ministry of Digital Development and Communications), valid to
+  2027-03-06
+- two "Root YR" / Let's Encrypt intermediates dated 2025-09-03, valid to 2028-09-02
+
+The module is named "Network Policy", logs `[Network Policy] TLS apply started: revision=…,
+trustAnchors=…`, and applies the anchors when the host is `vk.com`. Installing a remotely supplied
+CA inside the app means that CA can vouch for the app's API hosts, and the domain override fields
+exist so the operator can move those hosts elsewhere. Both are reachable at runtime with no user
+control. `is_ssl_pinning_enabled` is a feature flag, so whether the anchors are applied depends on
+app configuration rather than being fixed.
+
+Patch v1.1.12 line-up therefore gains a fifteenth patch, **Block remote network policy**, which
+forces the loader to return nothing so no policy can be installed or applied. The app's own
+certificate pinning is deliberately left intact — the patch removes the remote source of trust
+anchors and host overrides, not the app's static pinning.
 
 ## Device fingerprinting in the advertisement path grew substantially
 
@@ -127,7 +161,7 @@ that sub-patch was removed; only the v2 entry point remains to hide.
 ## Verification performed
 
 `patches-1.1.12.mpp` was rebuilt from the working tree and applied locally to the official
-1.111.0.3 APK with Morphe Desktop 1.15.0. All **14** patches applied, and the PATCHING, REBUILDING
+1.111.0.3 APK with Morphe Desktop 1.15.0. All **15** patches applied, and the PATCHING, REBUILDING
 and SIGNING steps all succeeded.
 
 The fail-closed audit (`scripts/rustore_upstream.py audit-patched`) passed against the patched
@@ -141,9 +175,10 @@ output:
 - direct telemetry stubs confirmed in `nn1.d`, `sp2.l`, `z41.d0`, `z41.o0`
 - stable device identifiers stubbed in `vt2.g` and `x20.c`
 - the three persisted push services are disabled at startup in `ru.vk.store.App.onCreate`
+- the remote network policy loader is stubbed
 
-The patched APK is 88,096,044 bytes
-(SHA-256 `fb747512ac35fc23d2c734282713d6890ac410b28f0e4ae4d52a8741ac0bedec`). It is a local test
+The patched APK is 88,100,140 bytes
+(SHA-256 `364751e6217588c466aa918574fb5644601c3babaac3302e546748d85648f2f1`). It is a local test
 artifact only and is not distributed; the release carries the `.mpp` bundle and the user applies
 it to the official APK.
 

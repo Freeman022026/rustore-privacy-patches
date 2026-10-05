@@ -345,6 +345,14 @@ def audit_patched(args: argparse.Namespace) -> None:
         code = run(str(args.apkanalyzer), "dex", "code", "--class", class_name,
                    "--method", method, str(args.apk))
         verify_device_identifier_stub(code, class_name)
+    # The remote network policy is neutralised by forcing the loader to return
+    # nothing, which stops remote TLS trust anchors and API-domain overrides.
+    policy_code = run(
+        str(args.apkanalyzer), "dex", "code", "--class", "jp0.l",
+        "--method", "a(Landroid/content/Context;)Ljava/lang/String;", str(args.apk),
+    )
+    if "const/4 v0, 0x0" not in policy_code:
+        raise RuntimeError("Remote network policy loader is not stubbed")
     startup_code = run(str(args.apkanalyzer), "dex", "code", "--class", "ru.vk.store.App",
                        "--method", "onCreate()V", str(args.apk))
     verify_instruction_prefix(startup_code, push_service_cleanup_prefix(), "Push service cleanup")

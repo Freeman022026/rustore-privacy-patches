@@ -518,3 +518,30 @@ val skipUpdateAuthenticationPatch = bytecodePatch(
         )
     }
 }
+
+@Suppress("unused")
+val blockRemoteNetworkPolicyPatch = bytecodePatch(
+    name = "Block remote network policy",
+    description = "Stops RuStore from downloading the remote network policy, which can install TLS trust anchors and override the API domain at runtime.",
+    default = true
+) {
+    compatibleWith(RUSTORE_COMPATIBILITY)
+
+    execute {
+        // The policy is a JSON document fetched from a fixed URL and applied to the
+        // app's own TLS configuration: it carries `certs` (PEM trust anchors added
+        // to a per-revision key store) and `override_domain` / `override_static_host`.
+        // Installing a remote CA would let that CA vouch for the app's API hosts, so
+        // the fetch is forced to return nothing and the validator discards the policy.
+        //
+        // The app's own certificate pinning is untouched: this only removes the
+        // remote source that can add trust anchors and redirect API domains.
+        networkPolicyLoadFingerprint.method.addInstructions(
+            0,
+            """
+                const/4 v0, 0x0
+                return-object v0
+            """
+        )
+    }
+}
