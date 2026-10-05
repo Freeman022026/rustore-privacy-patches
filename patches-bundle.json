@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-11T22:50:47",
-  "description": "## [1.1.12](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.11...v1.1.12) (2026-09-11)\n\n### 🐛 Bug Fixes\n\n* **RuStore:** replace SDK device identifiers ([91ff20e](https://github.com/Freeman022026/rustore-privacy-patches/commit/91ff20e7f9116501c13233cbbfdf65765f5de055))",
-  "download_url": "https://github.com/Freeman022026/rustore-privacy-patches/releases/download/v1.1.12/patches-1.1.12.mpp",
+  "created_at": "2026-10-05T19:09:46",
+  "description": "## [1.2.0](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.12...v1.2.0) (2026-10-05)\n\n### 🐛 Bug Fixes\n\n* **RuStore:** preserve privacy protections on version 111 ([a33524a](https://github.com/Freeman022026/rustore-privacy-patches/commit/a33524a52290445dd776a10e3423b66afce98f17))\n\n### ✨ New Features\n\n* **RuStore:** block the remote network policy ([8961dad](https://github.com/Freeman022026/rustore-privacy-patches/commit/8961dad445d8b263e1f370309f116e9e7cca3d3f))\n* **RuStore:** support RuStore 1.111.0.3 ([2fe2307](https://github.com/Freeman022026/rustore-privacy-patches/commit/2fe2307962809449493530ef2c612e969cb05fc3))",
+  "download_url": "https://github.com/Freeman022026/rustore-privacy-patches/releases/download/v1.2.0/patches-1.2.0.mpp",
   "signature_download_url": "",
-  "version": "1.1.12"
+  "version": "1.2.0"
 }

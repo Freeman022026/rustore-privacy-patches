@@ -119,14 +119,15 @@ Run `python3 scripts/test_rustore_upstream.py` to check the review gates. To ins
 ## Supported version and bundle
 
 <!-- PATCHES_START EXPANDED -->
-Current bundle: [v1.1.12](https://github.com/Freeman022026/rustore-privacy-patches/releases/tag/v1.1.12) on `main`.
+Current bundle: [v1.2.0](https://github.com/Freeman022026/rustore-privacy-patches/releases/tag/v1.2.0) on `main`.
 
 ### RuStore
 
-Supported versions: `1.109.1.0`
+Supported versions: `1.111.0.3`
 
 | Patch | Description |
 | --- | --- |
+| Block remote network policy | Blocks remote and cached network policies that add TLS trust anchors or override API and static-content hosts. |
 | Disable Kaspersky background scan | Disables periodic Kaspersky scheduling and reports disabled workers as successfully completed. |
 | Disable advertisements | Removes ad providers, sanitizes ad identifiers, returns an empty ad list, and keeps advertising consent disabled. |
 | Disable analytics and trackers | Disables audited analytics transports and replaces the stable request device identifier. |
@@ -135,7 +136,7 @@ Supported versions: `1.109.1.0`
 | Disable push services | Disables RuStore and VK push initialization, services, and audited push receivers. |
 | Disable verification hooks | Disables audited SMS, call, phone-state, SID, and Mail.ru verification hooks. |
 | Exclude Google Play apps from update checks | Excludes only apps whose recorded Android installer is Google Play from update requests. |
-| Hide gaming profile | Removes the gaming profile permission, hides both gaming buttons, and blocks navigation to the gaming profile. |
+| Hide gaming profile | Removes the gaming profile permission, hides the gaming profile widget, and blocks navigation to the gaming profile. |
 | Replace RuStore SDK device identifier | Replaces the RuStore SDK device identifier sent with payment and session requests with the zero UUID. |
 | Replace VK SDK device identifier | Replaces the VK SDK device fingerprint sent by VK ID and VK Pay request paths with the zero UUID. |
 | Restore secure-session compatibility | Adapts secure-session requests to RuStore 1.108 API changes for re-signed APKs. |
