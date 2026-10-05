@@ -26,7 +26,9 @@ For automatic updates, allow RuStore notifications and background operation when
 
 ## Available patches
 
-All fourteen patches are enabled by default, but Morphe lets you switch them on or off separately. The bundle includes patches for invasive permissions, advertisements, analytics and trackers, the RuStore and VK SDK device identifiers, push services, verification hooks, background hooks, periodic Kaspersky scans, update-request filtering, secure-session compatibility for re-signed APKs, the gaming profile, update authentication, and a strict update-only background worker policy.
+All fifteen patches are enabled by default, but Morphe lets you switch them on or off separately. The bundle includes patches for invasive permissions, advertisements, analytics and trackers, the RuStore and VK SDK device identifiers, push services, verification hooks, background hooks, periodic Kaspersky scans, update-request filtering, secure-session compatibility for re-signed APKs, the gaming profile, update authentication, remote network policies, and a strict update-only background worker policy.
+
+The remote network policy patch blocks downloads of policies that can add TLS trust anchors and change API or static-content hosts. It also bypasses cached policies during startup. The app's built-in certificate pinning remains active. The [RuStore 1.111.0.3 comparison](docs/comparison-1.109.1.0-to-1.111.0.3.md) records the APK changes and verification limits.
 
 The advertisements patch forces the "Agree to receive advertising materials" setting off. The checkbox is unchecked when displayed, and tapping it cannot opt the patched app back in.
 

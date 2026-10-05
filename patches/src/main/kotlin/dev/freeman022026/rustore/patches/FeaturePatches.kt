@@ -3,6 +3,7 @@ package dev.freeman022026.rustore.patches
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.removeInstructions
+import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
 import app.morphe.patcher.patch.bytecodePatch
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
@@ -32,7 +33,7 @@ val disableAdvertisementsPatch = bytecodePatch(
         rawAdvertisementRepositoryGetFingerprint.method.addInstructions(
             0,
             """
-                sget-object v0, Lut0/x;->a:Lut0/x;
+                sget-object v0, Lvt0/x;->a:Lvt0/x;
                 return-object v0
             """
         )
@@ -237,13 +238,15 @@ val restrictBackgroundWorkToUpdatesPatch = bytecodePatch(
                 $disablePersistedPushServices
             """
         )
-        autoUpdateForegroundRestrictionFingerprint.method.addInstructions(
-            0,
-            """
-                const/4 v0, 0x0
-                return v0
-            """
-        )
+        autoUpdateForegroundRestrictionFingerprint.method.apply {
+            val foregroundRead = implementation!!.instructions.withIndex().single { (_, instruction) ->
+                instruction.opcode == Opcode.IGET_BOOLEAN &&
+                    (instruction as? ReferenceInstruction)?.reference?.toString() == "Lxs2/b;->c:Z"
+            }
+            val register = (foregroundRead.value as OneRegisterInstruction).registerA
+            // Keep the existing update-permission and status checks.
+            replaceInstruction(foregroundRead.index, "const/4 v$register, 0x0")
+        }
 
         val workerSuccess = """
             new-instance v0, Landroidx/work/c${'$'}a${'$'}c;
@@ -267,7 +270,7 @@ val restrictBackgroundWorkToUpdatesPatch = bytecodePatch(
             0,
             """
                 move-object/from16 v0, p1
-                invoke-static {v0}, Lub/u0;->l(Landroid/content/Context;)Lub/u0;
+                invoke-static {v0}, Lub/r0;->m(Landroid/content/Context;)Lub/r0;
                 move-result-object v0
                 const-string v1, "tracer.disk.usage.worker"
                 invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
@@ -279,7 +282,7 @@ val restrictBackgroundWorkToUpdatesPatch = bytecodePatch(
         omicronNetworkRequestFingerprint.method.addInstructions(
             0,
             """
-                sget-object v0, Ls31/e;->ERROR:Ls31/e;
+                sget-object v0, Lt31/e;->ERROR:Lt31/e;
                 return-object v0
             """
         )
@@ -380,7 +383,10 @@ val restrictBackgroundWorkToUpdatesPatch = bytecodePatch(
             0,
             """
                 move-object/from16 v0, p0
-                iget-object v0, v0, Lyl1/i;->a:Ltb/k0;
+                iget-object v0, v0, Ldm1/i;->a:Lst0/a;
+                invoke-interface {v0}, Lst0/a;->get()Ljava/lang/Object;
+                move-result-object v0
+                check-cast v0, Ltb/k0;
                 const-string v1, "LauncherIconUpdate"
                 invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
                 return-void
@@ -471,7 +477,7 @@ val disableKasperskyBackgroundScanPatch = bytecodePatch(
 @Suppress("unused")
 val hideGamingProfilePatch = bytecodePatch(
     name = "Hide gaming profile",
-    description = "Removes the gaming profile permission, hides both gaming buttons, and blocks navigation to the gaming profile.",
+    description = "Removes the gaming profile permission, hides the gaming profile widget, and blocks navigation to the gaming profile.",
     default = true
 ) {
     compatibleWith(RUSTORE_COMPATIBILITY)
@@ -522,20 +528,21 @@ val skipUpdateAuthenticationPatch = bytecodePatch(
 @Suppress("unused")
 val blockRemoteNetworkPolicyPatch = bytecodePatch(
     name = "Block remote network policy",
-    description = "Stops RuStore from downloading the remote network policy, which can install TLS trust anchors and override the API domain at runtime.",
+    description = "Blocks remote and cached network policies that add TLS trust anchors or override API and static-content hosts.",
     default = true
 ) {
     compatibleWith(RUSTORE_COMPATIBILITY)
 
     execute {
-        // The policy is a JSON document fetched from a fixed URL and applied to the
-        // app's own TLS configuration: it carries `certs` (PEM trust anchors added
-        // to a per-revision key store) and `override_domain` / `override_static_host`.
-        // Installing a remote CA would let that CA vouch for the app's API hosts, so
-        // the fetch is forced to return nothing and the validator discards the policy.
-        //
-        // The app's own certificate pinning is untouched: this only removes the
-        // remote source that can add trust anchors and redirect API domains.
+        // A non-null embedded snapshot bypasses both cached payload and legacy
+        // api_endpoint restoration. The existing certificate pinning stays active.
+        networkPolicyConstructorFingerprint.method.addInstructions(
+            0,
+            """
+                invoke-static {}, Ljp0/o;->a()Ljp0/d;
+                move-result-object p2
+            """
+        )
         networkPolicyLoadFingerprint.method.addInstructions(
             0,
             """

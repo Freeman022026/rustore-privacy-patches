@@ -169,9 +169,10 @@ internal val kasperskyWorkerFingerprint = methodFingerprint(
 )
 
 internal val mineViewModelOpenGameCenterFingerprint = methodFingerprint(
-    "Lbh1/h;",
-    "A3",
-    "V"
+    "Lyo1/t5;",
+    "z0",
+    "V",
+    strings = listOf("gameProfile.click")
 )
 
 internal val gameCenterV2ButtonFingerprint = methodFingerprint(
@@ -223,6 +224,14 @@ internal val networkPolicyLoadFingerprint = methodFingerprint(
     strings = listOf("[Network Policy]: load remote config")
 )
 
+internal val networkPolicyConstructorFingerprint = methodFingerprint(
+    "Ljp0/n;",
+    "<init>",
+    "V",
+    listOf("Landroid/content/Context;", "Ljp0/d;", "Z"),
+    strings = listOf("superappkit_network_policy", "payload", "api_endpoint")
+)
+
 internal val applicationOnCreateFingerprint = methodFingerprint(
     "Lru/vk/store/App;", "onCreate", "V",
     strings = listOf("App process started: version=")
@@ -237,7 +246,7 @@ internal val googleAdvertisingIdFingerprint = methodFingerprint(
 )
 
 internal val rustoreSdkDeviceIdFingerprint = methodFingerprint(
-    "Lvt2/g;",
+    "Lb51/ol;",
     "a",
     "Ljava/lang/String;",
     strings = listOf("android_id", "value")
