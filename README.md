@@ -19,7 +19,7 @@ Morphe can reapply bundle updates to its saved APK. A new RuStore version requir
 <!-- PATCHES_START -->
 Current bundle: [v1.2.0](https://github.com/Freeman022026/rustore-privacy-patches/releases/tag/v1.2.0) on `main`.
 
-Supported RuStore versions: `1.111.0.3`
+Supported RuStore versions: `1.112.0.4`
 
 15 selectable patches.
 <!-- PATCHES_END -->

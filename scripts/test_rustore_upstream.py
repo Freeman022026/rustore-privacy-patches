@@ -63,14 +63,14 @@ def main() -> None:
         pass
     else:
         raise AssertionError("Active network policy loader passed")
-    guard = '''invoke-static {p1}, Lck1/l;->a(Lbk1/c;)Z
+    guard = '''invoke-static {p1}, Lal1/l;->a(Lzk1/c;)Z
 move-result v0
 if-eqz v0, :blocked
-iget-boolean v0, p1, Lbk1/c;->f:Z
+iget-boolean v0, p1, Lzk1/c;->f:Z
 if-eqz v0, :blocked
-iget-boolean p1, p1, Lbk1/c;->g:Z
+iget-boolean p1, p1, Lzk1/c;->g:Z
 if-eqz p1, :blocked
-iget-object p1, p0, Lck1/l;->u:Lxs2/b;
+iget-object p1, p0, Lal1/l;->u:Liu2/c;
 const/4 p1, 0x0
 if-nez p1, :blocked
 const/4 p1, 0x1
@@ -80,8 +80,8 @@ const/4 p1, 0x0
 return p1'''
     verify_auto_update_guard(guard)
     for broken in ("const/4 v0, 0x0\nreturn v0\n" + guard,
-                   guard.replace("const/4 p1, 0x0", "iget-boolean p1, p1, Lxs2/b;->c:Z", 1),
-                   guard.replace("iget-boolean p1, p1, Lbk1/c;->g:Z", "const/4 p1, 0x1")):
+                   guard.replace("const/4 p1, 0x0", "iget-boolean p1, p1, Liu2/c;->c:Z", 1),
+                   guard.replace("iget-boolean p1, p1, Lzk1/c;->g:Z", "const/4 p1, 0x1")):
         try:
             verify_auto_update_guard(broken)
         except RuntimeError:

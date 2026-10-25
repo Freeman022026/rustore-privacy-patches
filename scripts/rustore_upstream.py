@@ -96,9 +96,9 @@ DISABLED_COMPONENT_PREFIXES = {
 }
 
 DEVICE_IDENTIFIER_STUBS = {
-    "vt2.g": "a()Ljava/lang/String;",
-    "b51.ol": "a()Ljava/lang/String;",
-    "x20.c": "a(Landroid/content/Context;)Ljava/lang/String;",
+    "gv2.j": "a()Ljava/lang/String;",
+    "r51.gk": "a()Ljava/lang/String;",
+    "w20.c": "a(Landroid/content/Context;)Ljava/lang/String;",
 }
 
 INVALID_COMPONENT_PREFIXES = ("xav.", "xid.", "xo.", "xom.", "xu.")
@@ -331,12 +331,13 @@ def audit_patched(args: argparse.Namespace) -> None:
         str(args.apk),
     )
     verify_google_ad_id_stub(ad_code)
-    unit_stub = ["sget-object v0, Lut0/e0;->a:Lut0/e0;", "return-object v0"]
+    unit_stub = ["sget-object v0, Liu0/g0;->a:Liu0/g0;", "return-object v0"]
     telemetry_stubs = {
-        "z41.d0": ("invoke()Ljava/lang/Object;", unit_stub),
-        "z41.o0": ("a(Ljava/util/List;)V", ["return-void"]),
-        "nn1.d": ("a(Lau0/d;)Ljava/lang/Object;", unit_stub),
-        "sp2.l": ("b(Lau0/d;)Ljava/lang/Object;", unit_stub),
+        "p51.i0": ("invoke()Ljava/lang/Object;", unit_stub),
+        "dd0.d": ("invoke()Ljava/lang/Object;", unit_stub),
+        "p51.s0": ("a(Ljava/util/List;)V", ["return-void"]),
+        "mo1.d": ("a(Lou0/c;)Ljava/lang/Object;", unit_stub),
+        "vq2.l": ("b(Lou0/c;)Ljava/lang/Object;", unit_stub),
     }
     for class_name, (method, expected) in telemetry_stubs.items():
         code = run(str(args.apkanalyzer), "dex", "code", "--class", class_name,
@@ -348,47 +349,43 @@ def audit_patched(args: argparse.Namespace) -> None:
         verify_device_identifier_stub(code, class_name)
     # Both the download and cached/legacy policy restoration must be blocked.
     policy_code = run(
-        str(args.apkanalyzer), "dex", "code", "--class", "jp0.l",
+        str(args.apkanalyzer), "dex", "code", "--class", "xp0.j",
         "--method", "a(Landroid/content/Context;)Ljava/lang/String;", str(args.apk),
     )
     verify_instruction_prefix(policy_code, ["const/4 v0, 0x0", "return-object v0"],
                               "Remote network policy loader")
-    policy_class = run(str(args.apkanalyzer), "dex", "code", "--class", "jp0.n", str(args.apk))
+    policy_class = run(str(args.apkanalyzer), "dex", "code", "--class", "xp0.l", str(args.apk))
     constructor = re.search(
-        r"(?ms)^\.method [^\n]* <init>\(Landroid/content/Context;Ljp0/d;Z\)V\n.*?^\.end method",
+        r"(?ms)^\.method [^\n]* <init>\(Landroid/content/Context;Lxp0/c;Z\)V\n.*?^\.end method",
         policy_class,
     )
     if constructor is None:
         raise RuntimeError("Network policy constructor not found")
     verify_instruction_prefix(constructor.group(), [
-        "invoke-static {}, Ljp0/o;->a()Ljp0/d;", "move-result-object p2",
+        "invoke-static {}, Lxp0/m;->a()Lxp0/c;", "move-result-object p2",
     ], "Embedded network policy")
-    guard_code = run(str(args.apkanalyzer), "dex", "code", "--class", "ck1.l",
-                     "--method", "b(Lbk1/c;)Z", str(args.apk))
+    guard_code = run(str(args.apkanalyzer), "dex", "code", "--class", "al1.l",
+                     "--method", "b(Lzk1/c;)Z", str(args.apk))
     verify_auto_update_guard(guard_code)
     entry_stubs = {
-        "j81.f0": (
-            "a(Ljava/util/List;Le81/c;Ljava/util/List;Lb81/d;Ljava/util/Set;Ljava/util/UUID;ZZLau0/d;)Ljava/lang/Object;",
-            ["sget-object v0, Lvt0/x;->a:Lvt0/x;", "return-object v0"],
+        "z81.e0": (
+            "a(Ljava/util/List;Lu81/c;Ljava/util/List;Lr81/c;Ljava/util/Set;Ljava/util/UUID;ZZLou0/c;)Ljava/lang/Object;",
+            ["sget-object v0, Lju0/z;->a:Lju0/z;", "return-object v0"],
         ),
-        "t31.b": ("a(Lj31/c;Lt31/a;Ll31/d;)Lt31/e;",
-                  ["sget-object v0, Lt31/e;->ERROR:Lt31/e;", "return-object v0"]),
+        "j41.b": ("b(Lz31/c;Lj41/a;Lb41/d;)Lj41/e;",
+                  ["sget-object v0, Lj41/e;->ERROR:Lj41/e;", "return-object v0"]),
         "ru.ok.tracer.disk.usage.DiskUsage": (
             "initialize$tracer_disk_usage_release(Landroid/content/Context;)V",
             ["move-object/from16 v0, p1",
-             "invoke-static {v0}, Lub/r0;->m(Landroid/content/Context;)Lub/r0;",
+             "invoke-static {v0}, Lub/u0;->l(Landroid/content/Context;)Lub/u0;",
              "move-result-object v0", 'const-string v1, "tracer.disk.usage.worker"',
-             "invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;", "return-void"],
+             "invoke-virtual {v0, v1}, Ltb/i0;->a(Ljava/lang/String;)Ltb/z;", "return-void"],
         ),
-        "dm1.i": ("a()V", [
-            "move-object/from16 v0, p0", "iget-object v0, v0, Ldm1/i;->a:Lst0/a;",
-            "invoke-interface {v0}, Lst0/a;->get()Ljava/lang/Object;", "move-result-object v0",
-            "check-cast v0, Ltb/k0;", 'const-string v1, "LauncherIconUpdate"',
-            "invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;", "return-void",
-        ]),
-        "yo1.t5": ("z0()V", ["return-void"]),
-        "kh1.j": (
-            "d(Lkotlin/jvm/functions/Function0;Lk2/j;Lkh1/m;Landroidx/compose/runtime/a;I)V",
+        "cn1.k": ("b(Lou0/c;)Ljava/lang/Object;", unit_stub),
+        "xp1.v5": ("w0()V", ["return-void"]),
+        "zh1.g": ("D3()V", ["return-void"]),
+        "ii1.k": (
+            "d(Lkotlin/jvm/functions/Function0;Lk2/j;Lii1/n;Landroidx/compose/runtime/a;I)V",
             ["return-void"],
         ),
     }
@@ -531,14 +528,14 @@ def verify_auto_update_guard(code: str) -> None:
         raise RuntimeError("Auto-update status branches changed")
     code = code.replace(targets[0], ":blocked")
     verify_instruction_prefix(code, [
-        "invoke-static {p1}, Lck1/l;->a(Lbk1/c;)Z",
+        "invoke-static {p1}, Lal1/l;->a(Lzk1/c;)Z",
         "move-result v0",
         "if-eqz v0, :blocked",
-        "iget-boolean v0, p1, Lbk1/c;->f:Z",
+        "iget-boolean v0, p1, Lzk1/c;->f:Z",
         "if-eqz v0, :blocked",
-        "iget-boolean p1, p1, Lbk1/c;->g:Z",
+        "iget-boolean p1, p1, Lzk1/c;->g:Z",
         "if-eqz p1, :blocked",
-        "iget-object p1, p0, Lck1/l;->u:Lxs2/b;",
+        "iget-object p1, p0, Lal1/l;->u:Liu2/c;",
         "const/4 p1, 0x0",
         "if-nez p1, :blocked",
         "const/4 p1, 0x1",
@@ -550,8 +547,7 @@ def verify_auto_update_guard(code: str) -> None:
 
 def push_service_cleanup_prefix() -> list[str]:
     expected = [
-        "move-object/from16 v6, p0",
-        "invoke-virtual {v6}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;",
+        "invoke-virtual {p0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;",
         "move-result-object v0",
     ]
     for service in ("com.vk.push.authsdk.ipc.AuthService", "com.vk.push.pushsdk.ipc.PushService",
@@ -559,10 +555,10 @@ def push_service_cleanup_prefix() -> list[str]:
         expected.extend([
             "new-instance v1, Landroid/content/ComponentName;",
             f'const-string v2, "{service}"',
-            "invoke-direct {v1, v6, v2}, Landroid/content/ComponentName;-><init>(Landroid/content/Context;Ljava/lang/String;)V",
-            "const/4 v3, 0x2",
-            "const/4 v4, 0x1",
-            "invoke-virtual {v0, v1, v3, v4}, Landroid/content/pm/PackageManager;->setComponentEnabledSetting(Landroid/content/ComponentName;II)V",
+            "invoke-direct {v1, p0, v2}, Landroid/content/ComponentName;-><init>(Landroid/content/Context;Ljava/lang/String;)V",
+            "const/4 v2, 0x2",
+            "const/4 v3, 0x1",
+            "invoke-virtual {v0, v1, v2, v3}, Landroid/content/pm/PackageManager;->setComponentEnabledSetting(Landroid/content/ComponentName;II)V",
         ])
     return expected
 

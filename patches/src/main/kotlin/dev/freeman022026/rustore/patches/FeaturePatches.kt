@@ -5,10 +5,18 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.removeInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
 import app.morphe.patcher.patch.bytecodePatch
+import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
+
+private const val ZERO_UUID = "00000000-0000-0000-0000-000000000000"
+
+private const val RETURN_ZERO_UUID = """
+    const-string v0, "$ZERO_UUID"
+    return-object v0
+"""
 
 @Suppress("unused")
 val disableAdvertisementsPatch = bytecodePatch(
@@ -24,24 +32,27 @@ val disableAdvertisementsPatch = bytecodePatch(
             0,
             """
                 new-instance v0, Lcom/google/android/gms/ads/identifier/AdvertisingIdClient${'$'}Info;
-                const-string v1, "00000000-0000-0000-0000-000000000000"
+                const-string v1, "$ZERO_UUID"
                 const/4 v2, 0x1
                 invoke-direct {v0, v1, v2}, Lcom/google/android/gms/ads/identifier/AdvertisingIdClient${'$'}Info;-><init>(Ljava/lang/String;Z)V
                 return-object v0
             """
         )
-        rawAdvertisementRepositoryGetFingerprint.method.addInstructions(
+        sourceMethod("Raw advertisement repository", "RawAdvertisementRepositoryImpl.kt") { method ->
+            method.params.size == 9 && method.params[0] == "Ljava/util/List;" &&
+                method.params[5] == "Ljava/util/UUID;"
+        }.addInstructions(
             0,
             """
-                sget-object v0, Lvt0/x;->a:Lvt0/x;
+                sget-object v0, ${emptyListReference()}
                 return-object v0
             """
         )
         advertisementIdsConstructorFingerprint.method.addInstructions(
             0,
             """
-                const-string p1, "00000000-0000-0000-0000-000000000000"
-                const-string p2, "00000000-0000-0000-0000-000000000000"
+                const-string p1, "$ZERO_UUID"
+                const-string p2, "$ZERO_UUID"
                 const/4 p3, 0x0
                 const/4 p4, 0x0
                 const/4 p5, 0x0
@@ -61,7 +72,12 @@ val excludeGooglePlayAppsFromUpdateChecksPatch = bytecodePatch(
     compatibleWith(RUSTORE_COMPATIBILITY)
 
     execute {
-        appVersionInfoListFingerprint.method.apply {
+        methodWhere("Installer filter of update checks") { type, method ->
+            method.isStatic && method.returnType == "Ljava/io/Serializable;" &&
+                method.params.size == 3 && method.params[0] == type.type &&
+                method.params[1] == "Ljava/lang/String;" &&
+                method.stringConstants.any { it.contains("installedApp") }
+        }.apply {
             val instructions = implementation!!.instructions
             val equalsIndex = instructions.withIndex().single { (_, instruction) ->
                 (instruction as? ReferenceInstruction)?.reference?.toString() ==
@@ -90,79 +106,75 @@ val disableAnalyticsAndTrackersPatch = bytecodePatch(
     dependsOn(analyticsManifestPatch)
 
     execute {
+        val returnUnit = returnUnit()
+        val workerSuccess = workerSuccess()
+
         // These paths run directly, outside the blocked WorkManager workers.
+        methodsWhere { _, method ->
+            method.name == "invoke" && method.params.isEmpty() &&
+                method.hasStrings("metrics_event_table", "job_config_version")
+        }.also { require(it.isNotEmpty()) { "Metrics event collection not found" } }
+            .forEach { it.addInstructions(0, returnUnit) }
         listOf(
-            metricsEventCollectionFingerprint,
-            mediaScopeTrackFingerprint,
-            inAppStoryInitializeFingerprint
-        ).forEach { fingerprint ->
-            fingerprint.method.addInstructions(
-                0,
-                """
-                    sget-object v0, Lut0/e0;->a:Lut0/e0;
-                    return-object v0
-                """
-            )
-        }
+            methodWhere("MediaScope launch tracking") { _, method ->
+                method.returnType == "Ljava/lang/Object;" && method.hasStrings("mediaScopeCustomLaunch")
+            },
+            methodWhere("InAppStory initialization") { _, method ->
+                method.returnType == "Ljava/lang/Object;" && method.hasStrings("story.initilized", "story_user_id")
+            }
+        ).forEach { it.addInstructions(0, returnUnit) }
         // Also discard queued events from installations predating this patch.
-        metricsEventSendFingerprint.method.addInstruction(0, "return-void")
-        requestDeviceIdFingerprint.method.addInstructions(
-            0,
-            """
-                const-string v0, "00000000-0000-0000-0000-000000000000"
-                return-object v0
-            """
-        )
+        methodWhere("Metrics event sending") { _, method ->
+            method.returnType == "V" && method.params == listOf("Ljava/util/List;") &&
+                method.hasStrings("USER_ID_KEY", "X-Metrics-Request-Time")
+        }.addInstruction(0, "return-void")
+        sourceMethod("Request device identifier", "DeviceInfoProvider.kt") { method ->
+            method.returnType == "Ljava/lang/String;" && method.params.isEmpty() && method.hasStrings("android_id")
+        }.addInstructions(0, RETURN_ZERO_UUID)
         listOf(appMetricaActivateFingerprint, myTrackerInitializeFingerprint).forEach { fingerprint ->
             fingerprint.method.addInstruction(0, "return-void")
         }
-        mainActivityOnNewIntentFingerprint.method.apply {
-            val matchingIndexes = implementation!!.instructions.withIndex()
+        // Earlier RuStore releases reported app opens from MainActivity.onNewIntent.
+        methodsWhere { type, method ->
+            type.type == "Lru/vk/store/MainActivity;" && method.name == "onNewIntent"
+        }.forEach { method ->
+            method.implementation!!.instructions.withIndex()
                 .filter { (_, instruction) ->
-                    (instruction as? ReferenceInstruction)?.reference?.toString() ==
-                        REPORT_APP_OPEN_REFERENCE
+                    (instruction as? ReferenceInstruction)?.reference?.toString() == REPORT_APP_OPEN_REFERENCE
                 }
                 .map { it.index }
-            require(matchingIndexes.size == 1) {
-                "Expected one AppMetrica reportAppOpen call, found ${matchingIndexes.size}"
-            }
-            removeInstructions(matchingIndexes.single(), 1)
+                .reversed()
+                .forEach { method.removeInstructions(it, 1) }
         }
 
-        altCraftSendFingerprint.method.addInstruction(0, "return-void")
-        altCraftScheduleFingerprint.method.addInstructions(
-            0,
-            """
-                const-string v0, "AltCraftFlushEventsWorker"
-                invoke-virtual {p0, v0}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
-                return-void
-            """
-        )
-        altCraftWorkerFingerprint.method.addInstructions(
-            0,
-            """
-                new-instance v0, Landroidx/work/c${'$'}a${'$'}c;
-                invoke-direct {v0}, Landroidx/work/c${'$'}a${'$'}c;-><init>()V
-                return-object v0
-            """
-        )
+        sourceMethod("AltCraft event sending", "AltCraftAnalyticsImpl.kt") { method ->
+            method.returnType == "V" &&
+                method.params.take(4) == listOf("Ljava/lang/String;", "Ljava/util/Map;", "Ljava/lang/String;", "Z") &&
+                method.params.size == 5
+        }.addInstruction(0, "return-void")
 
-        radarScheduleFingerprint.method.addInstructions(
-            0,
-            """
-                const-string v0, "RadarFlushSnapshotsWorker"
-                invoke-virtual {p0, v0}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
-                return-void
-            """
-        )
-        radarWorkerFingerprint.method.addInstructions(
-            0,
-            """
-                new-instance v0, Landroidx/work/c${'$'}a${'$'}c;
-                invoke-direct {v0}, Landroidx/work/c${'$'}a${'$'}c;-><init>()V
-                return-object v0
-            """
-        )
+        val workManager = workManager()
+        listOf(
+            ALTCRAFT_WORKER to "AltCraftFlushEventsWorker",
+            RADAR_WORKER to "RadarFlushSnapshotsWorker"
+        ).forEach { (worker, uniqueName) ->
+            val companion = worker.removeSuffix(";") + "\$a;"
+            methodWhere("$uniqueName scheduling") { type, method ->
+                type.type == companion && method.isStatic && method.returnType == "V" &&
+                    method.params.size == 2 && method.params[1] == "J"
+            }.apply {
+                require(params[0] == workManager.workManager) { "$uniqueName scheduler takes ${params[0]}" }
+                addInstructions(
+                    0,
+                    """
+                        const-string v0, "$uniqueName"
+                        invoke-virtual {p0, v0}, ${workManager.cancelUniqueWork}
+                        return-void
+                    """
+                )
+            }
+            workMethod(worker).addInstructions(0, workerSuccess)
+        }
     }
 }
 
@@ -175,13 +187,10 @@ val replaceRuStoreSdkDeviceIdentifierPatch = bytecodePatch(
     compatibleWith(RUSTORE_COMPATIBILITY)
 
     execute {
-        rustoreSdkDeviceIdFingerprint.method.addInstructions(
-            0,
-            """
-                const-string v0, "00000000-0000-0000-0000-000000000000"
-                return-object v0
-            """
-        )
+        methodWhere("RuStore SDK device identifier") { type, method ->
+            type.sourceFile != "DeviceInfoProvider.kt" && method.returnType == "Ljava/lang/String;" &&
+                method.params.isEmpty() && method.hasStrings("android_id", "value")
+        }.addInstructions(0, RETURN_ZERO_UUID)
     }
 }
 
@@ -194,13 +203,7 @@ val replaceVkSdkDeviceIdentifierPatch = bytecodePatch(
     compatibleWith(RUSTORE_COMPATIBILITY)
 
     execute {
-        vkSdkDeviceIdFingerprint.method.addInstructions(
-            0,
-            """
-                const-string v0, "00000000-0000-0000-0000-000000000000"
-                return-object v0
-            """
-        )
+        vkSdkDeviceIdFingerprint.method.addInstructions(0, RETURN_ZERO_UUID)
     }
 }
 
@@ -214,233 +217,143 @@ val restrictBackgroundWorkToUpdatesPatch = bytecodePatch(
     dependsOn(analyticsManifestPatch, disablePushServicesPatch)
 
     execute {
-        // Android preserves explicit component overrides across APK updates.
-        val disablePersistedPushServices = listOf(
-            "com.vk.push.authsdk.ipc.AuthService",
-            "com.vk.push.pushsdk.ipc.PushService",
-            "com.vk.push.pushsdk.masterhost.MasterSelectionService"
-        ).joinToString("\n") { service ->
-            """
-                new-instance v1, Landroid/content/ComponentName;
-                const-string v2, "$service"
-                invoke-direct {v1, v6, v2}, Landroid/content/ComponentName;-><init>(Landroid/content/Context;Ljava/lang/String;)V
-                const/4 v3, 0x2
-                const/4 v4, 0x1
-                invoke-virtual {v0, v1, v3, v4}, Landroid/content/pm/PackageManager;->setComponentEnabledSetting(Landroid/content/ComponentName;II)V
-            """
-        }
-        applicationOnCreateFingerprint.method.addInstructions(
-            0,
-            """
-                move-object/from16 v6, p0
-                invoke-virtual {v6}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
-                move-result-object v0
-                $disablePersistedPushServices
-            """
-        )
-        autoUpdateForegroundRestrictionFingerprint.method.apply {
-            val foregroundRead = implementation!!.instructions.withIndex().single { (_, instruction) ->
-                instruction.opcode == Opcode.IGET_BOOLEAN &&
-                    (instruction as? ReferenceInstruction)?.reference?.toString() == "Lxs2/b;->c:Z"
+        val unit = unitReference()
+        val returnUnit = returnUnit()
+        val workerSuccess = workerSuccess()
+        val workManager = workManager()
+
+        applicationOnCreateFingerprint.method.apply {
+            // WorkManager keeps unique work across APK updates. Its configuration needs the
+            // worker factory that Hilt injects in super.onCreate().
+            val superOnCreate = implementation!!.instructions.indexOfFirst { instruction ->
+                instruction.opcode == Opcode.INVOKE_SUPER &&
+                    (instruction as ReferenceInstruction).reference.toString().endsWith("->onCreate()V")
             }
+            require(superOnCreate >= 0) { "App.onCreate no longer calls super.onCreate()" }
+            addInstructions(
+                superOnCreate + 1,
+                """
+                    invoke-static {p0}, ${workManager.getInstance}
+                    move-result-object v0
+                """ + persistedUniqueWorkNames.joinToString("\n") { name ->
+                    """
+                        const-string v1, "$name"
+                        invoke-virtual {v0, v1}, ${workManager.cancelUniqueWork}
+                    """
+                }
+            )
+
+            // Android preserves explicit component overrides across APK updates.
+            val disablePersistedPushServices = listOf(
+                "com.vk.push.authsdk.ipc.AuthService",
+                "com.vk.push.pushsdk.ipc.PushService",
+                "com.vk.push.pushsdk.masterhost.MasterSelectionService"
+            ).joinToString("\n") { service ->
+                """
+                    new-instance v1, Landroid/content/ComponentName;
+                    const-string v2, "$service"
+                    invoke-direct {v1, p0, v2}, Landroid/content/ComponentName;-><init>(Landroid/content/Context;Ljava/lang/String;)V
+                    const/4 v2, 0x2
+                    const/4 v3, 0x1
+                    invoke-virtual {v0, v1, v2, v3}, Landroid/content/pm/PackageManager;->setComponentEnabledSetting(Landroid/content/ComponentName;II)V
+                """
+            }
+            addInstructions(
+                0,
+                """
+                    invoke-virtual {p0}, Landroid/content/Context;->getPackageManager()Landroid/content/pm/PackageManager;
+                    move-result-object v0
+                    $disablePersistedPushServices
+                """
+            )
+        }
+
+        sourceMethod("Automatic update conditions", "AutoUpdateAnyAppController.kt") { method ->
+            method.returnType == "Z" && method.params.size == 1 && foregroundReads(method).size == 1
+        }.apply {
+            val foregroundRead = foregroundReads(this).single()
             val register = (foregroundRead.value as OneRegisterInstruction).registerA
             // Keep the existing update-permission and status checks.
             replaceInstruction(foregroundRead.index, "const/4 v$register, 0x0")
         }
 
-        val workerSuccess = """
-            new-instance v0, Landroidx/work/c${'$'}a${'$'}c;
-            invoke-direct {v0}, Landroidx/work/c${'$'}a${'$'}c;-><init>()V
-            return-object v0
-        """
-        blockedBackgroundCoroutineWorkerFingerprints.forEachIndexed { index, fingerprint ->
-            val workerClass = blockedCoroutineWorkerClasses[index]
-            requireNotNull(fingerprint.methodOrNull) {
-                "Background coroutine worker fingerprint changed: $workerClass"
-            }.addInstructions(0, workerSuccess)
+        (blockedCoroutineWorkerClasses + blockedWorkerClasses).forEach { worker ->
+            workMethod(worker).addInstructions(0, workerSuccess)
         }
-        blockedBackgroundWorkerFingerprints.forEachIndexed { index, fingerprint ->
-            val workerClass = blockedWorkerClasses[index]
-            requireNotNull(fingerprint.methodOrNull) {
-                "Background worker fingerprint changed: $workerClass"
-            }.addInstructions(0, workerSuccess)
+        // The work requests themselves are built by suspend functions that complete with Unit.
+        scheduledWorkerClasses.forEach { worker ->
+            workSchedulers(worker, unit).forEach { it.addInstructions(0, returnUnit) }
         }
 
         tracerDiskUsageInitializerFingerprint.method.addInstructions(
             0,
             """
                 move-object/from16 v0, p1
-                invoke-static {v0}, Lub/r0;->m(Landroid/content/Context;)Lub/r0;
+                invoke-static {v0}, ${workManager.getInstance}
                 move-result-object v0
                 const-string v1, "tracer.disk.usage.worker"
-                invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
+                invoke-virtual {v0, v1}, ${workManager.cancelUniqueWork}
                 return-void
             """
         )
         tracerSampleUploadFingerprint.method.addInstruction(0, "return-void")
 
-        omicronNetworkRequestFingerprint.method.addInstructions(
-            0,
-            """
-                sget-object v0, Lt31/e;->ERROR:Lt31/e;
-                return-object v0
-            """
-        )
-        omicronDefaultScheduleFingerprint.method.addInstructions(
-            0,
-            """
-                move-object/from16 v0, p0
-                invoke-virtual {v0}, Lru/mail/omicron/DefaultWorkManagerExecutor;->cancel()V
-                return-void
-            """
-        )
-        omicronMultiAccountScheduleFingerprint.method.addInstructions(
-            0,
-            """
-                move-object/from16 v0, p0
-                invoke-virtual {v0}, Lru/mail/omicron/MultiAccountWorkManagerExecutor;->cancel()V
-                return-void
-            """
-        )
-
-        installIdentifierInitializerFingerprint.method.addInstructions(
-            0,
-            """
-                move-object/from16 v0, p0
-                iget-object v0, v0, Lru/vk/store/feature/install/identifier/impl/presentation/a;->d:Lst0/a;
-                invoke-interface {v0}, Lst0/a;->get()Ljava/lang/Object;
-                move-result-object v0
-                check-cast v0, Ltb/k0;
-                const-string v1, "InstallIdentifierSyncWorker"
-                invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
-                const-string v1, "tracer.disk.usage.worker"
-                invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
-                sget-object v0, Lut0/e0;->a:Lut0/e0;
-                return-object v0
-            """
-        )
-        usageStatsInitializerFingerprint.method.addInstructions(
-            0,
-            """
-                move-object/from16 v0, p0
-                iget-object v0, v0, Lru/vk/store/feature/usagestats/impl/presentation/a;->b:Lst0/a;
-                invoke-interface {v0}, Lst0/a;->get()Ljava/lang/Object;
-                move-result-object v0
-                check-cast v0, Ltb/k0;
-                const-string v1, "UsageStatsCollectorWorker"
-                invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
-                sget-object v0, Lut0/e0;->a:Lut0/e0;
-                return-object v0
-            """
-        )
-        cancelSubscriptionInitializerFingerprint.method.addInstructions(
-            0,
-            """
-                move-object/from16 v0, p0
-                iget-object v0, v0, Lru/vk/store/feature/payments/subscription/update/impl/presentation/a;->b:Lst0/a;
-                invoke-interface {v0}, Lst0/a;->get()Ljava/lang/Object;
-                move-result-object v0
-                check-cast v0, Ltb/k0;
-                const-string v1, "CancelSubscriptionSyncWorker"
-                invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
-                sget-object v0, Lut0/e0;->a:Lut0/e0;
-                return-object v0
-            """
-        )
-        remoteAnalyticsInitializerFingerprint.method.addInstructions(
-            0,
-            """
-                move-object/from16 v0, p0
-                iget-object v0, v0, Ll62/d;->a:Lru/vk/store/feature/storeapp/analytics/remote/impl/presentation/b;
-                iget-object v0, v0, Lru/vk/store/feature/storeapp/analytics/remote/impl/presentation/b;->a:Lst0/a;
-                invoke-interface {v0}, Lst0/a;->get()Ljava/lang/Object;
-                move-result-object v0
-                check-cast v0, Ltb/k0;
-                const-string v1, "SendAnalyticsEventPeriodicWorker"
-                invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
-                const-string v1, "SendAnalyticsEventWorker"
-                invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
-                sget-object v0, Lut0/e0;->a:Lut0/e0;
-                return-object v0
-            """
-        )
-        remoteAnalyticsSchedulerFingerprint.method.addInstructions(
-            0,
-            """
-                move-object/from16 v0, p0
-                iget-object v0, v0, Lru/vk/store/feature/storeapp/analytics/remote/impl/presentation/b;->a:Lst0/a;
-                invoke-interface {v0}, Lst0/a;->get()Ljava/lang/Object;
-                move-result-object v0
-                check-cast v0, Ltb/k0;
-                const-string v1, "SendAnalyticsEventWorker"
-                invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
-                sget-object v0, Lut0/e0;->a:Lut0/e0;
-                return-object v0
-            """
-        )
-
-        launcherIconScheduleFingerprint.method.addInstructions(
-            0,
-            """
-                move-object/from16 v0, p0
-                iget-object v0, v0, Ldm1/i;->a:Lst0/a;
-                invoke-interface {v0}, Lst0/a;->get()Ljava/lang/Object;
-                move-result-object v0
-                check-cast v0, Ltb/k0;
-                const-string v1, "LauncherIconUpdate"
-                invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
-                return-void
-            """
-        )
-        startDestinationScheduleFingerprint.method.addInstructions(
-            0,
-            """
-                move-object/from16 v0, p0
-                iget-object v0, v0, Lq52/e;->a:Lst0/a;
-                invoke-interface {v0}, Lst0/a;->get()Ljava/lang/Object;
-                move-result-object v0
-                check-cast v0, Ltb/k0;
-                const-string v1, "PeriodicUpdateStartDestination"
-                invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
-                return-void
-            """
-        )
-        tabsOrderScheduleFingerprint.method.addInstructions(
-            0,
-            """
-                move-object/from16 v0, p0
-                iget-object v0, v0, Lw52/g;->a:Lst0/a;
-                invoke-interface {v0}, Lst0/a;->get()Ljava/lang/Object;
-                move-result-object v0
-                check-cast v0, Ltb/k0;
-                const-string v1, "NavigationTabsOrderUpdate"
-                invoke-virtual {v0, v1}, Ltb/k0;->a(Ljava/lang/String;)Ltb/a0;
-                return-void
-            """
-        )
-        publisherTrackingScheduleFingerprint.method.addInstruction(0, "return-void")
-
-        listOf(analyticsDispatchFingerprint, analyticsUserIdFingerprint).forEach { fingerprint ->
-            fingerprint.method.addInstruction(0, "return-void")
-        }
-        listOf(
-            "VK push provider" to pushProviderOnInitializedFingerprint,
-            "VK push authentication" to pushAuthOnInitializedFingerprint
-        ).forEach { (feature, fingerprint) ->
-            requireNotNull(fingerprint.methodOrNull) {
-                "$feature initializer fingerprint changed"
-            }.addInstructions(
+        sourceMethod("Omicron config request", "NetworkDataRetriever.kt") { method ->
+            method.params.size == 3 && classDefByOrNull(method.returnType)?.let {
+                AccessFlags.ENUM.isSet(it.accessFlags)
+            } == true
+        }.apply {
+            val result = classDefBy(returnType)
+            require(result.staticFields.any { it.name == "ERROR" && it.type == returnType }) {
+                "Omicron request result has no ERROR"
+            }
+            addInstructions(
                 0,
                 """
-                    sget-object v0, Lut0/e0;->a:Lut0/e0;
+                    sget-object v0, $returnType->ERROR:$returnType
                     return-object v0
                 """
             )
         }
-        pushLifecycleFingerprints.forEachIndexed { index, fingerprint ->
-            val lifecycleMethod = pushLifecycleMethods.keys.elementAt(index)
-            requireNotNull(fingerprint.methodOrNull) {
-                "Push lifecycle fingerprint changed: $lifecycleMethod"
+        listOf(
+            "Lru/mail/omicron/DefaultWorkManagerExecutor;" to listOf("J", "Z"),
+            "Lru/mail/omicron/MultiAccountWorkManagerExecutor;" to listOf("J", "J", "Z")
+        ).forEach { (executor, parameters) ->
+            methodWhere("Omicron scheduling in $executor") { type, method ->
+                type.type == executor && method.returnType == "V" && method.params == parameters
+            }.addInstructions(
+                0,
+                """
+                    invoke-virtual/range {p0 .. p0}, $executor->cancel()V
+                    return-void
+                """
+            )
+        }
+
+        sourceMethod("Remote analytics dispatch", "AnalyticsSenderImpl.kt") { method ->
+            method.returnType == "V" && method.params == listOf("Ljava/lang/String;", "Ljava/util/Map;", "Z")
+        }.addInstruction(0, "return-void")
+        sourceMethod("Remote analytics user identifier", "AnalyticsSenderImpl.kt") { method ->
+            method.returnType == "V" && method.params == listOf("J")
+        }.addInstruction(0, "return-void")
+
+        listOf(
+            "VK push provider" to "VkpnsPushProviderSdk.kt",
+            "VK push authentication" to "VkpnsAuthSdk.kt"
+        ).forEach { (feature, sourceFile) ->
+            val initializer = allClasses.filter { type ->
+                type.sourceFile == sourceFile && setOf("create", "invoke", "invokeSuspend").all { name ->
+                    type.methods.any { it.name == name }
+                }
+            }
+            require(initializer.size == 1) { "$feature initializer changed: ${initializer.size} candidates" }
+            methodWhere("$feature initializer") { type, method ->
+                type.type == initializer.single().type && method.name == "invokeSuspend"
+            }.addInstructions(0, returnUnit)
+        }
+        pushLifecycleMethods.forEach { (name, parameters) ->
+            sourceMethod("Push lifecycle $name", "ActivityLifecycleDataSource.kt") { method ->
+                method.name == name && method.returnType == "V" && method.params == parameters
             }.addInstruction(0, "return-void")
         }
     }
@@ -463,14 +376,7 @@ val disableKasperskyBackgroundScanPatch = bytecodePatch(
                 return v0
             """
         )
-        kasperskyWorkerFingerprint.method.addInstructions(
-            0,
-            """
-                new-instance v0, Landroidx/work/c${'$'}a${'$'}c;
-                invoke-direct {v0}, Landroidx/work/c${'$'}a${'$'}c;-><init>()V
-                return-object v0
-            """
-        )
+        workMethod(KASPERSKY_WORKER).addInstructions(0, workerSuccess())
     }
 }
 
@@ -484,8 +390,13 @@ val hideGamingProfilePatch = bytecodePatch(
     dependsOn(gamingManifestPatch)
 
     execute {
-        mineViewModelOpenGameCenterFingerprint.method.addInstruction(0, "return-void")
-        gameCenterV2ButtonFingerprint.method.addInstruction(0, "return-void")
+        methodsWhere { _, method ->
+            method.returnType == "V" && method.params.isEmpty() && method.hasStrings("gameProfile.click")
+        }.also { require(it.isNotEmpty()) { "Gaming profile navigation not found" } }
+            .forEach { it.addInstruction(0, "return-void") }
+        methodWhere("Game center button") { _, method ->
+            method.returnType == "V" && method.hasStrings("GAME_CENTER_BUTTON_V2_KEY")
+        }.addInstruction(0, "return-void")
     }
 }
 
@@ -499,7 +410,11 @@ val skipUpdateAuthenticationPatch = bytecodePatch(
     dependsOn(validatedManifestPatch)
 
     execute {
-        val unitReferences = updateAuthSuggestFingerprint.method.implementation!!.instructions
+        val authSuggest = methodWhere("Update authentication suggestion") { type, method ->
+            type.sourceFile == "AuthSuggestDelegateImpl.kt" && type.methods.none { it.name == "invokeSuspend" } &&
+                !method.isStatic && method.returnType == "Ljava/lang/Object;" && method.params.size == 1
+        }
+        val unitReferences = authSuggest.implementation!!.instructions
             .zipWithNext()
             .mapNotNull { (fieldInstruction, returnInstruction) ->
                 if (
@@ -515,7 +430,7 @@ val skipUpdateAuthenticationPatch = bytecodePatch(
             "Expected one completed-result singleton reference, found ${unitReferences.size}"
         }
 
-        updateAuthSuggestFingerprint.method.addInstructions(
+        authSuggest.addInstructions(
             0,
             """
                 sget-object v0, ${unitReferences.single()}
@@ -534,16 +449,27 @@ val blockRemoteNetworkPolicyPatch = bytecodePatch(
     compatibleWith(RUSTORE_COMPATIBILITY)
 
     execute {
+        val constructor = methodWhere("Network policy constructor") { _, method ->
+            method.name == "<init>" && method.params.size == 3 &&
+                method.params[0] == "Landroid/content/Context;" && method.params[2] == "Z" &&
+                method.hasStrings("superappkit_network_policy", "payload", "api_endpoint")
+        }
+        val policy = constructor.params[1]
+        val embeddedSnapshot = methodWhere("Embedded network policy") { _, method ->
+            method.isStatic && method.params.isEmpty() && method.returnType == policy
+        }
         // A non-null embedded snapshot bypasses both cached payload and legacy
         // api_endpoint restoration. The existing certificate pinning stays active.
-        networkPolicyConstructorFingerprint.method.addInstructions(
+        constructor.addInstructions(
             0,
             """
-                invoke-static {}, Ljp0/o;->a()Ljp0/d;
+                invoke-static {}, ${embeddedSnapshot.definingClass}->${embeddedSnapshot.name}()$policy
                 move-result-object p2
             """
         )
-        networkPolicyLoadFingerprint.method.addInstructions(
+        methodWhere("Remote network policy load") { _, method ->
+            method.returnType != "V" && method.hasStrings("[Network Policy]: load remote config")
+        }.addInstructions(
             0,
             """
                 const/4 v0, 0x0
