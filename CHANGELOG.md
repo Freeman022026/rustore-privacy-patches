@@ -1,8 +1,9 @@
 ## [1.3.0](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.2.0...v1.3.0) (2026-11-04)
 
-### ✨ New Features
-
-* **RuStore:** support RuStore 1.113.2.0 ([b79de6f](https://github.com/Freeman022026/rustore-privacy-patches/commit/b79de6f74d94ef01938812828e88e17da6e14701))
+- Added RuStore 1.113.2.0 support.
+- Added patches that disable review prompts, ad-link auto-install and TV install.
+- Blocked push metrics and promo tracking pixels.
+- Startup now cancels background work left from earlier versions.
 
 ## [1.2.0](https://github.com/Freeman022026/rustore-privacy-patches/compare/v1.1.12...v1.2.0) (2026-10-05)
 
